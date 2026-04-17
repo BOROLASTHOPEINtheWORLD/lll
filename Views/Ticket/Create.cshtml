@@ -1,0 +1,576 @@
+﻿@{
+    ViewData["Title"] = "Создание новой заявки";
+}
+
+@await Html.PartialAsync("_FileIcons")
+
+
+<div class="app-container">
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- Основной контент -->
+    <main class="main-content create-ticket-page">
+
+        <!-- Заголовок -->
+        <div class="page-header">
+            <h1>Новая заявка</h1>
+        </div>
+
+   
+        <div class="form-card">
+            <div class="form-header">
+                <div class="form-header-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm4 12h-4v3h-2v-3H8v-2h4V7h2v6h4v2z" />
+                    </svg>
+                </div>
+                <div class="form-header-content">
+                    <h2>Детали заявки</h2>
+                    <span>Все поля обязательны для заполнения</span>
+                </div>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert-error">
+                    <ul>
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+               
+                
+
+            <form method="post" asp-controller="Ticket" asp-action="Create" enctype="multipart/form-data">
+                <div class="form-body">
+                    <div class="form-grid">
+                        <!-- Название заявки -->
+                        <div class="form-group full-width">
+                            <div class="form-label">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M4 6h16v2H4zm2-4h12v2H6zm14 8H4v2h16v-2zm0 4H4v2h16v-2zm0 4H4v2h16v-2z" />
+                                </svg>
+                                <span>Название заявки</span>
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-icon">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z" />
+                                    </svg>
+                                </span>
+                                <input type="text" class="form-control" name="Title" placeholder="Например: Не работает принтер" required>
+                            </div>
+                        </div>
+
+                        <!-- Категория -->
+                        <div class="form-group">
+                            <div class="form-label">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M10 4H4c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 8H4c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zm10 0h-6c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zm0-8h-6c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z" />
+                                </svg>
+                                <span>Категория</span>
+                            </div>
+                            <select class="form-control" name="CategoryId" id="CategoryId" required>
+                                <option value="" disabled selected>Выберите категорию</option>
+                                @if (ViewBag.Categories != null)
+                                {
+                                    foreach (var category in ViewBag.Categories)
+                                    {
+                                        <option value="@category.Id">@category.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- ПОДКАТЕГОРИЯ (динамическая, появляется после выбора категории) -->
+                        <div class="form-group" id="subcategoryGroup" style="display: none;">
+                            <div class="form-label">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M4 6h16v2H4zm2-4h12v2H6zm14 8H4v2h16v-2zm0 4H4v2h16v-2zm0 4H4v2h16v-2z" />
+                                </svg>
+                                <span>Подкатегория</span>
+                                <span class="field-hint"></span>
+                            </div>
+                            <select class="form-control" name="SubcategoryId" id="SubcategoryId">
+                                <option value="">Выберите подкатегорию</option>
+                            </select>
+                        </div>
+
+                        <!-- ИСПОЛНИТЕЛЬ -->
+                        <div class="form-group">
+                            <div class="form-label">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                </svg>
+                                <span>Исполнитель</span>
+                            </div>
+                            <select class="form-control" name="AssignedToId" id="AssignedToId" required>
+                                <option value="">Не выбран</option>
+                                @if (ViewBag.Assignees != null)
+                                {
+                                    foreach (var assignee in ViewBag.Assignees)
+                                    {
+                                        <option value="@assignee.Id">@assignee.LastName @assignee.FirstName (@assignee.Role?.Name)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- СРОК ВЫПОЛНЕНИЯ -->
+                        <div class="form-group">
+                            <div class="form-label">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.1.8-1.2-4.5-2.7z" />
+                                </svg>
+                                <span>Срок выполнения</span>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="date" class="form-control" name="DueDate" id="DueDate" style="flex: 2;">
+                                <select class="form-control" id="DueTime" style="flex: 1;">
+                                    <option value="">Время</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00">12:00</option>
+                                    <option value="13:00">13:00</option>
+                                    <option value="14:00">14:00</option>
+                                    <option value="15:00">15:00</option>
+                                    <option value="16:00">16:00</option>
+                                    <option value="17:00">17:00</option>
+                                    <option value="18:00">18:00</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Приоритет (звездочки) -->
+                        <div class="form-group">
+                            <div class="form-label">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor" />
+                                </svg>
+                                <span>Приоритет</span>
+                            </div>
+                            <div class="rating-stars">
+                                <input type="hidden" name="Priority" id="priorityValue" value="3">
+                                <div class="stars-container">
+                                    <span class="star" data-value="1">☆</span>
+                                    <span class="star" data-value="2">☆</span>
+                                    <span class="star" data-value="3">☆</span>
+                                    <span class="star" data-value="4">☆</span>
+                                    <span class="star" data-value="5">☆</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Описание -->
+                        <div class="form-group full-width">
+                            <div class="form-label">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 7h10v2H7zm0 4h10v2H7zm0 4h6v2H7z" />
+                                </svg>
+                                <span>Описание проблемы</span>
+                            </div>
+                            <textarea class="form-control" name="Description" placeholder="Опишите проблему как можно подробнее..." maxlength="1000" onkeyup="updateCounter(this)"></textarea>
+                            <div class="textarea-counter">
+                                <span id="charCount">0</span>/1000 символов
+                            </div>
+                        </div>
+
+                        <!-- Загрузка файлов -->
+                        <div class="form-group full-width">
+                            <div class="form-label">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z" />
+                                </svg>
+                                <span>Вложения</span>
+                            </div>
+
+                            <div class="file-upload-area" id="fileDropArea">
+                                <input type="file" id="fileInput" name="attachments" multiple style="display: none;" accept="image/*,.pdf,.doc,.docx">
+                                <div class="upload-icon">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                                    </svg>
+                                </div>
+                                <div class="upload-text">Нажмите для загрузки файлов</div>
+                                <div class="upload-hint">или перетащите их сюда</div>
+                                <div class="upload-hint">Поддерживаются: JPG, PNG, GIF, PDF, DOC (до 10MB)</div>
+                            </div>
+
+                            <!-- Превью загруженных файлов -->
+                            <div class="file-preview-container" id="filePreviewContainer"></div>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки действий -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                            </svg>
+                            Отмена
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm4-10H5V5h10v4z" />
+                            </svg>
+                            Создать заявку
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<div id="imageModal" class="image-modal" style="display: none;">
+    <div class="image-modal-overlay"></div>
+    <div class="image-modal-container">
+        <button class="image-modal-close">&times;</button>
+        <img id="modalImage" src="" alt="Preview">
+        <div class="image-modal-caption">
+            <span id="modalCaption"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Счетчик символов
+    function updateCounter(textarea) {
+        const count = textarea.value.length;
+        document.getElementById('charCount').textContent = count;
+    }
+
+    // ========== ЗВЕЗДОЧКИ ДЛЯ ПРИОРИТЕТА ==========
+    const stars = document.querySelectorAll('.star');
+    const priorityInput = document.getElementById('priorityValue');
+
+    function setRating(value) {
+        priorityInput.value = value;
+        stars.forEach(star => {
+            const starValue = parseInt(star.dataset.value);
+            if (starValue <= value) {
+                star.textContent = '★';
+                star.classList.add('active');
+            } else {
+                star.textContent = '☆';
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            const value = parseInt(star.dataset.value);
+            setRating(value);
+        });
+
+        star.addEventListener('mouseenter', () => {
+            const value = parseInt(star.dataset.value);
+            stars.forEach(s => {
+                const starVal = parseInt(s.dataset.value);
+                if (starVal <= value) {
+                    s.textContent = '★';
+                    s.style.color = '#FBBF24';
+                } else {
+                    s.textContent = '☆';
+                    s.style.color = '#D1D5DB';
+                }
+            });
+        });
+    });
+
+    document.querySelector('.stars-container').addEventListener('mouseleave', () => {
+        const currentValue = parseInt(priorityInput.value);
+        stars.forEach(star => {
+            const starValue = parseInt(star.dataset.value);
+            if (starValue <= currentValue) {
+                star.textContent = '★';
+                star.style.color = '';
+            } else {
+                star.textContent = '☆';
+                star.style.color = '';
+            }
+        });
+    });
+
+    setRating(3);
+
+    // ========== ДИНАМИЧЕСКАЯ ЗАГРУЗКА ПОДКАТЕГОРИЙ ==========
+    const categorySelect = document.getElementById('CategoryId');
+    const subcategoryGroup = document.getElementById('subcategoryGroup');
+    const subcategorySelect = document.getElementById('SubcategoryId');
+
+    if (categorySelect) {
+        categorySelect.addEventListener('change', async function() {
+            const categoryId = this.value;
+
+            if (!categoryId) {
+                subcategoryGroup.style.display = 'none';
+                return;
+            }
+
+            const response = await fetch(`/Ticket/GetSubcategories?categoryId=${categoryId}`);
+            const subcategories = await response.json();
+
+            if (subcategories && subcategories.length > 0) {
+                subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
+                subcategories.forEach(sub => {
+                    subcategorySelect.innerHTML += `<option value="${sub.id}">${sub.name}</option>`;
+                });
+                subcategoryGroup.style.display = 'block';
+            } else {
+                subcategoryGroup.style.display = 'none';
+            }
+        
+        });
+    }
+    // ========== ОБЪЕДИНЕНИЕ ДАТЫ И ВРЕМЕНИ ==========
+    const dueDateInput = document.getElementById('DueDate');
+    const dueTimeSelect = document.getElementById('DueTime');
+    let combinedDateTime = null;
+
+    if (dueDateInput) {
+        // Исправляем минимальную дату
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dueDateInput.min = `${year}-${month}-${day}`;
+
+        // При изменении даты или времени - объединяем
+        function updateDateTime() {
+            if (dueDateInput.value && dueTimeSelect.value) {
+                const combined = new Date(`${dueDateInput.value}T${dueTimeSelect.value}`);
+                if (!isNaN(combined)) {
+                    combinedDateTime = combined;
+                    console.log('Выбран срок:', combined);
+                }
+            }
+        }
+
+        dueDateInput.addEventListener('change', updateDateTime);
+        dueTimeSelect.addEventListener('change', updateDateTime);
+    }
+    // ========== РАБОТА С ФАЙЛАМИ (ПРЕВЬЮ) ==========
+    const dropArea = document.getElementById('fileDropArea');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('filePreviewContainer');
+    let selectedFiles = [];
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function getFileIcon(fileType, fileName) {
+        const ext = fileName.split('.').pop().toLowerCase();
+
+        if (fileType === 'application/pdf' || ext === 'pdf') {
+            return `<svg width="40" height="40"><use href="#file-pdf"/></svg>`;
+        }
+        if (fileType.includes('word') || ext === 'doc' || ext === 'docx') {
+            return `<svg width="40" height="40"><use href="#file-word"/></svg>`;
+        }
+        if (fileType.includes('excel') || ext === 'xls' || ext === 'xlsx') {
+            return `<svg width="40" height="40"><use href="#file-excel"/></svg>`;
+        }
+        if (fileType.includes('powerpoint') || ext === 'ppt' || ext === 'pptx') {
+            return `<svg width="40" height="40"><use href="#file-ppt"/></svg>`;
+        }
+        if (fileType.startsWith('image/')) {
+            return null;
+        }
+        return `<svg width="40" height="40"><use href="#file-generic"/></svg>`;
+    }
+
+    // Функция открытия изображения в модальном окне
+    function openImageModal(imageUrl, imageName) {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        const modalCaption = document.getElementById('modalCaption');
+
+        if (modal && modalImg) {
+            modal.style.display = 'flex';
+            modalImg.src = imageUrl;
+            modalCaption.textContent = imageName;
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    // Закрытие модального окна
+    function closeImageModal() {
+        const modal = document.getElementById('imageModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+
+    function createFilePreview(file) {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'file-preview-item';
+        previewItem.dataset.fileName = file.name;
+
+        const previewContent = document.createElement('div');
+
+        if (file.type.startsWith('image/')) {
+            previewContent.className = 'file-preview-image';
+            const reader = new FileReader();
+
+            // Сохраняем результат чтения файла в переменную
+            let imageDataUrl = null;
+
+            reader.onload = (e) => {
+                imageDataUrl = e.target.result;
+                previewContent.style.backgroundImage = `url(${imageDataUrl})`;
+                previewContent.style.backgroundSize = 'cover';
+                previewContent.style.backgroundPosition = 'center';
+            };
+            reader.readAsDataURL(file);
+
+            // Добавляем клик отдельно, используя сохраненный imageDataUrl
+            previewItem.style.cursor = 'pointer';
+            previewItem.addEventListener('click', (e) => {
+                if (e.target.closest('.file-preview-remove')) return;
+                if (imageDataUrl) {
+                    openImageModal(imageDataUrl, file.name);
+                } else {
+                    // Если данные еще не загрузились, ждем
+                    const checkInterval = setInterval(() => {
+                        if (imageDataUrl) {
+                            clearInterval(checkInterval);
+                            openImageModal(imageDataUrl, file.name);
+                        }
+                    }, 50);
+                }
+            });
+
+        } else {
+            previewContent.className = 'file-preview-icon';
+            previewContent.innerHTML = getFileIcon(file.type, file.name);
+            previewItem.style.cursor = 'default';
+        }
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'file-preview-info';
+        infoDiv.innerHTML = `
+            <div class="file-preview-name" title="${file.name}">${file.name.length > 12 ? file.name.substring(0, 9) + '...' : file.name}</div>
+            <div class="file-preview-size">${formatFileSize(file.size)}</div>
+        `;
+
+        const removeBtn = document.createElement('div');
+        removeBtn.className = 'file-preview-remove';
+        removeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="white"/></svg>';
+        removeBtn.onclick = (e) => {
+            e.stopPropagation();
+            const index = selectedFiles.findIndex(f => f.name === file.name && f.size === file.size);
+            if (index !== -1) {
+                selectedFiles.splice(index, 1);
+                updateFileInput();
+            }
+            previewItem.remove();
+        };
+
+        previewItem.appendChild(previewContent);
+        previewItem.appendChild(infoDiv);
+        previewItem.appendChild(removeBtn);
+
+        return previewItem;
+    }
+
+    function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+        fileInput.files = dataTransfer.files;
+
+        const uploadText = dropArea.querySelector('.upload-text');
+        const hints = dropArea.querySelectorAll('.upload-hint');
+
+        if (selectedFiles.length > 0) {
+            uploadText.textContent = `Выбрано файлов: ${selectedFiles.length}`;
+            if (hints[0]) hints[0].textContent = selectedFiles.map(f => f.name).join(', ');
+            if (hints[1]) hints[1].style.display = 'none';
+        } else {
+            uploadText.textContent = 'Нажмите для загрузки файлов';
+            if (hints[0]) hints[0].textContent = 'или перетащите их сюда';
+            if (hints[1]) hints[1].style.display = 'block';
+        }
+    }
+
+    function handleFiles(files) {
+        const maxSize = 10 * 1024 * 1024;
+
+        const validFiles = Array.from(files).filter(file => {
+            if (file.size > maxSize) {
+                alert(`Файл ${file.name} превышает 10MB`);
+                return false;
+            }
+            return true;
+        });
+
+        validFiles.forEach(file => {
+            if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+                selectedFiles.push(file);
+                const preview = createFilePreview(file);
+                previewContainer.appendChild(preview);
+            }
+        });
+
+        updateFileInput();
+    }
+
+    // Drag & Drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    }, false);
+
+    dropArea.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    // Обработчики закрытия модального окна
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('imageModal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal || e.target.classList.contains('image-modal-overlay') || e.target.classList.contains('image-modal-close')) {
+                    closeImageModal();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.style.display === 'flex') {
+                    closeImageModal();
+                }
+            });
+        }
+    });
+</script>

@@ -1,0 +1,35 @@
+﻿@model dynamic
+
+<div class="stat-card">
+    <div class="stat-info">
+        <h3>Всего пользователей</h3>
+        <div class="stat-number">@Model.TotalUsers</div>
+    </div>
+    <div class="stat-icon users">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        </svg>
+    </div>
+</div>
+<div class="stat-card">
+    <div class="stat-info">
+        <h3>Активные</h3>
+        <div class="stat-number active">@Model.ActiveUsers</div>
+    </div>
+    <div class="stat-icon active">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+        </svg>
+    </div>
+</div>
+<div class="stat-card">
+    <div class="stat-info">
+        <h3>Заблокированные</h3>
+        <div class="stat-number inactive">@Model.InactiveUsers</div>
+    </div>
+    <div class="stat-icon inactive">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+        </svg>
+    </div>
+</div>

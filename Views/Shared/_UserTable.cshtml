@@ -1,0 +1,75 @@
+﻿@model IEnumerable<labsupport.Models.User>
+
+<div class="tickets-table-container">
+    <table class="tickets-table">
+        <thead>
+            <tr>
+                <th>ФИО</th>
+                <th>Email</th>
+                <th>Логин</th>
+                <th>Роль</th>
+                <th>Отдел</th>
+                <th>Должность</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var user in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                @{
+                                    ViewBag.AvatarSize = "small";
+                                }
+                                <partial name="_UserAvatar" model="user" />
+                                <a href="@Url.Action("UserDetails", new { id = user.Id })" class="ticket-link">
+                                    @user.LastName @user.FirstName @user.MiddleName
+                                </a>
+                            </div>
+                        </td>
+                        <td>@user.Email</td>
+                        <td>@user.Username</td>
+                        <td>@(user.Role?.Name ?? "-")</td>
+                        <td>@(user.Department?.Name ?? "-")</td>
+                        <td>@(user.Position?.Name ?? "-")</td>
+                        <td><span class="status-badge @(user.IsActive == true ? "status-open" : "status-default")">@(user.IsActive == true ? "Активен" : "Заблокирован")</span></td>
+                        <td class="action-buttons">
+                            <a href="@Url.Action("UserDetails", new { id = user.Id })" class="btn-icon view" title="Просмотр">
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>
+                            </a>
+                            <a href="@Url.Action("UserDetails", new { id = user.Id, editMode = true })" class="btn-icon edit" title="Редактировать">
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
+                            </a>
+                            <button class="btn-icon toggle" onclick="toggleUserStatus(@user.Id, this)" title="@(user.IsActive == true ? "Заблокировать" : "Разблокировать")">
+                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                    @if (user.IsActive == true)
+                                    {
+                                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+                                    }
+                                    else
+                                    {
+                                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z" />
+                                    }
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" class="empty-state">
+                        <svg viewBox="0 0 24 24" width="48" height="48"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" /></svg>
+                        <p>Пользователи не найдены</p>
+                        <a href="@Url.Action("UserDetails", new { id = 0 })">Создать первого пользователя</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

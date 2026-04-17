@@ -1,0 +1,219 @@
+﻿@{
+    ViewData["Title"] = "Управление пользователями";
+    var roles = ViewBag.Roles as List<labsupport.Models.Role>;
+}
+
+<div class="app-container">
+    @await Html.PartialAsync("_Sidebar")
+
+    <main class="main-content">
+        <div class="content-header">
+            <h1>Управление пользователями</h1>
+            <a href="@Url.Action("UserDetails", "Admin", new { id = 0 })" class="btn-create">
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                </svg>
+                Создать пользователя
+            </a>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Всего пользователей</h3>
+                    <div class="stat-number" id="totalCount">@ViewBag.TotalUsers</div>
+                </div>
+                <div class="stat-icon users">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Активные</h3>
+                    <div class="stat-number active" id="activeCount">@ViewBag.ActiveUsers</div>
+                </div>
+                <div class="stat-icon active">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Заблокированные</h3>
+                    <div class="stat-number inactive" id="inactiveCount">@ViewBag.InactiveUsers</div>
+                </div>
+                <div class="stat-icon inactive">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Фильтры -->
+        <div class="filters-section">
+            <div class="filters-form">
+                <div class="filter-group">
+                    <label>Поиск:</label>
+                    <input type="text" id="searchInput" class="search-input" placeholder="ФИО, email, логин..." value="@ViewBag.SearchTerm">
+                </div>
+
+                <div class="filter-group">
+                    <label>Роль:</label>
+                    <select id="roleSelect" class="filter-select">
+                        <option value="">Все роли</option>
+                        @foreach (var role in roles)
+                        {
+                            <option value="@role.Id" selected="@(ViewBag.SelectedRoleId == role.Id)">
+                                @role.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Статус:</label>
+                    <select id="statusSelect" class="filter-select">
+                        <option value="">Все</option>
+                        <option value="true" selected="@(ViewBag.SelectedIsActive == true)">Активные</option>
+                        <option value="false" selected="@(ViewBag.SelectedIsActive == false)">Заблокированные</option>
+                    </select>
+                </div>
+
+                <button id="resetBtn" class="btn-reset">Сбросить</button>
+            </div>
+        </div>
+
+        <!-- Таблица пользователей -->
+        <div id="usersTableContainer">
+            @await Html.PartialAsync("_UserTable", (IEnumerable<labsupport.Models.User>)ViewBag.Users)
+        </div>
+    </main>
+</div>
+
+<script>
+    function renderTable(users) {
+        if (!users || users.length === 0) {
+            document.getElementById('usersTableContainer').innerHTML = `
+                <div class="tickets-table-container">
+                    <table class="tickets-table">
+                        <thead><tr><th>ФИО</th><th>Email</th><th>Логин</th><th>Роль</th><th>Отдел</th><th>Должность</th><th>Статус</th><th>Действия</th></tr></thead>
+                        <tbody>
+                            <tr><td colspan="8" class="empty-state">
+                                <svg viewBox="0 0 24 24" width="48" height="48"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                <p>Пользователи не найдены</p>
+                                <a href="/Admin/UserDetails/0">Создать первого пользователя</a>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>`;
+            return;
+        }
+
+        let html = `<div class="tickets-table-container"><table class="tickets-table"><thead><tr>
+            <th>ФИО</th><th>Email</th><th>Логин</th><th>Роль</th><th>Отдел</th><th>Должность</th><th>Статус</th><th>Действия</th>
+        </tr></thead><tbody>`;
+
+        for (const user of users) {
+            const initials = (user.firstName?.charAt(0) || '?') + (user.lastName?.charAt(0) || '');
+            const avatarHtml = user.avatarPath
+                ? `<img src="${user.avatarPath}" alt="Avatar" class="avatar-table" />`
+                : `<div class="avatar-table-placeholder">${initials}</div>`;
+
+            const statusClass = user.isActive ? 'status-open' : 'status-default';
+            const statusText = user.isActive ? 'Активен' : 'Заблокирован';
+
+            const toggleIcon = user.isActive
+                ? '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>'
+                : '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM9 8V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9z"/>';
+
+            html += `
+                <tr>
+                    <td><div class="user-cell">${avatarHtml}<a href="/Admin/UserDetails/${user.id}" class="ticket-link">${user.fullName}</a></div></td>
+                    <td>${user.email}</td>
+                    <td>${user.username}</td>
+                    <td>${user.role}</td>
+                    <td>${user.department}</td>
+                    <td>${user.position}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td class="action-buttons">
+                        <a href="/Admin/UserDetails/${user.id}" class="btn-icon view" title="Просмотр">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                        </a>
+                        <a href="/Admin/UserDetails/${user.id}?editMode=true" class="btn-icon edit" title="Редактировать">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        </a>
+                        <button class="btn-icon toggle" onclick="toggleUserStatus(${user.id}, this)" title="Заблокировать/Разблокировать">
+                            <svg viewBox="0 0 24 24" width="16" height="16">${toggleIcon}</svg>
+                        </button>
+                    </td>
+                </tr>`;
+        }
+
+        html += `</tbody></table></div>`;
+        document.getElementById('usersTableContainer').innerHTML = html;
+    }
+
+    function updateStats(total, active, inactive) {
+        document.getElementById('totalCount').textContent = total;
+        document.getElementById('activeCount').textContent = active;
+        document.getElementById('inactiveCount').textContent = inactive;
+    }
+
+    function loadUsers() {
+        const search = document.getElementById('searchInput').value;
+        const roleId = document.getElementById('roleSelect').value;
+        const isActive = document.getElementById('statusSelect').value;
+
+        fetch(`/Admin/GetUsersJson?search=${encodeURIComponent(search)}&roleId=${roleId}&isActive=${isActive}`)
+            .then(response => response.json())
+            .then(data => {
+                renderTable(data.users);
+                updateStats(data.totalCount, data.activeCount, data.inactiveCount);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    let timeoutId;
+    document.getElementById('searchInput').addEventListener('input', function() {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(loadUsers, 300);
+    });
+
+    document.getElementById('roleSelect').addEventListener('change', loadUsers);
+    document.getElementById('statusSelect').addEventListener('change', loadUsers);
+
+    document.getElementById('resetBtn').addEventListener('click', function() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('roleSelect').value = '';
+        document.getElementById('statusSelect').value = '';
+        loadUsers();
+    });
+
+    function toggleUserStatus(userId, button) {
+        if (!confirm('Изменить статус пользователя?')) return;
+
+        fetch('/Admin/ToggleUserStatus/' + userId, {
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadUsers();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка');
+        });
+    }
+</script>

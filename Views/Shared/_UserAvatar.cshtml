@@ -1,0 +1,12 @@
+﻿@model labsupport.Models.User
+
+@if (!string.IsNullOrEmpty(Model?.AvatarPath))
+{
+    <img src="@Model.AvatarPath" alt="Avatar" class="@(ViewBag.AvatarSize == "small" ? "avatar-table" : "avatar-default")" />
+}
+else
+{
+    <div class="@(ViewBag.AvatarSize == "small" ? "avatar-table-placeholder" : "avatar-default-placeholder")">
+        @((Model?.FirstName?.FirstOrDefault().ToString() ?? "?") + (Model?.LastName?.FirstOrDefault().ToString() ?? ""))
+    </div>
+}

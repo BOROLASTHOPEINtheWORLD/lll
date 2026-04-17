@@ -1,0 +1,233 @@
+﻿@{
+    ViewData["Title"] = "Справочники";
+    var mainCategories = ViewBag.MainCategories as List<labsupport.Models.MainCategory>;
+    var subcategories = ViewBag.Subcategories as List<labsupport.Models.Subcategory>;
+    var departments = ViewBag.Departments as List<labsupport.Models.Department>;
+    var positions = ViewBag.Positions as List<labsupport.Models.Position>;
+
+    // Группируем подкатегории по категориям
+    var subcategoriesByCategory = new Dictionary<short, List<Subcategory>>();
+
+    if (subcategories != null)
+    {
+        subcategoriesByCategory = subcategories
+            .GroupBy(s => s.MainCategoryId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+    }
+}
+
+<div class="app-container">
+    @await Html.PartialAsync("_Sidebar")
+
+    <main class="main-content">
+        <div class="content-header">
+            <h1>Справочники</h1>
+            <p>Управление справочной информацией системы</p>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert-success">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert-error">@TempData["Error"]</div>
+        }
+
+        <!-- Древовидная структура категорий -->
+        <div class="reference-layout">
+            <!-- Левая колонка: Категории и подкатегории -->
+            <div class="reference-categories">
+                <div class="form-card">
+                    <div class="form-header">
+                        <div class="form-header-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z" />
+                            </svg>
+                        </div>
+                        <div class="form-header-content">
+                            <h2>Категории заявок</h2>
+                            <span>Управление категориями и подкатегориями</span>
+                        </div>
+                    </div>
+
+                    <div class="categories-tree">
+                        @foreach (var category in mainCategories)
+                        {
+                            <div class="category-item" data-id="@category.Id">
+                                <div class="category-header">
+                                    <div class="category-name">
+                                        <svg class="folder-icon" viewBox="0 0 24 24" width="20" height="20">
+                                            <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+                                        </svg>
+                                        <form method="post" asp-action="UpdateMainCategory" class="inline-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@category.Id" />
+                                            <input type="text" name="name" value="@category.Name" class="edit-input-category" />
+                                            <button type="submit" class="btn-icon save" title="Сохранить">💾</button>
+                                        </form>
+                                    </div>
+                                    <div class="category-actions">
+                                        <form method="post" asp-action="DeleteMainCategory" class="inline-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@category.Id" />
+                                            <button type="submit" class="btn-icon delete" title="Удалить категорию" onclick="return confirm('Удалить категорию? Все подкатегории тоже будут удалены!')">🗑️</button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Подкатегории внутри категории -->
+                                <div class="subcategories-list">
+                                    @if (subcategoriesByCategory.ContainsKey(category.Id) && subcategoriesByCategory[category.Id].Any())
+                                    {
+                                        foreach (var sub in subcategoriesByCategory[category.Id])
+                                        {
+                                            <div class="subcategory-item">
+                                                <div class="subcategory-name">
+                                                    <svg class="subfolder-icon" viewBox="0 0 24 24" width="16" height="16">
+                                                        <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+                                                    </svg>
+                                                    <form method="post" asp-action="UpdateSubcategory" class="inline-form">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@sub.Id" />
+                                                        <input type="hidden" name="mainCategoryId" value="@category.Id" />
+                                                        <input type="text" name="name" value="@sub.Name" class="edit-input-subcategory" />
+                                                        <button type="submit" class="btn-icon save small" title="Сохранить">💾</button>
+                                                    </form>
+                                                </div>
+                                                <div class="subcategory-actions">
+                                                    <form method="post" asp-action="DeleteSubcategory" class="inline-form">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@sub.Id" />
+                                                        <button type="submit" class="btn-icon delete small" title="Удалить подкатегорию" onclick="return confirm('Удалить подкатегорию?')">🗑️</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="empty-subcategories">
+                                            <span>Нет подкатегорий</span>
+                                        </div>
+                                    }
+
+                                    <!-- Форма добавления подкатегории -->
+                                    <div class="add-subcategory-form">
+                                        <form method="post" asp-action="AddSubcategory">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="mainCategoryId" value="@category.Id" />
+                                            <input type="text" name="name" placeholder="Новая подкатегория" class="add-input" />
+                                            <button type="submit" class="btn-add-small">+ Добавить</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Форма добавления новой категории -->
+                        <div class="add-category-form">
+                            <form method="post" asp-action="AddMainCategory">
+                                @Html.AntiForgeryToken()
+                                <div class="add-category-wrapper">
+                                    <svg class="plus-icon" viewBox="0 0 24 24" width="20" height="20">
+                                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                                    </svg>
+                                    <input type="text" name="name" placeholder="Новая категория" class="add-category-input" required />
+                                    <button type="submit" class="btn-add-category">Создать категорию</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая колонка: Отделы и должности -->
+            <div class="reference-right">
+                <!-- Отделы -->
+                <div class="form-card">
+                    <div class="form-header">
+                        <div class="form-header-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z" />
+                            </svg>
+                        </div>
+                        <div class="form-header-content">
+                            <h2>Отделы</h2>
+                            <span>Управление отделами компании</span>
+                        </div>
+                    </div>
+                    <div class="reference-list">
+                        @foreach (var item in departments)
+                        {
+                            <div class="reference-item">
+                                <form method="post" asp-action="UpdateDepartment" class="inline-form full-width">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="text" name="name" value="@item.Name" class="edit-input-ref" />
+ 
+                                </form>
+                                <form method="post" asp-action="DeleteDepartment" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn-icon delete" title="Удалить" onclick="return confirm('Удалить отдел?')">🗑️</button>
+                                </form>
+                            </div>
+                        }
+                        <div class="add-form">
+                            <form method="post" asp-action="AddDepartment">
+                                @Html.AntiForgeryToken()
+                                <div class="add-wrapper">
+                                    <input type="text" name="name" placeholder="Новый отдел" required />
+                                    <button type="submit" class="btn-add">+ Добавить</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Должности -->
+                <div class="form-card">
+                    <div class="form-header">
+                        <div class="form-header-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z" />
+                            </svg>
+                        </div>
+                        <div class="form-header-content">
+                            <h2>Должности</h2>
+                            <span>Управление должностями сотрудников</span>
+                        </div>
+                    </div>
+                    <div class="reference-list">
+                        @foreach (var item in positions)
+                        {
+                            <div class="reference-item">
+                                <form method="post" asp-action="UpdatePosition" class="inline-form full-width">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="text" name="name" value="@item.Name" class="edit-input-ref" />
+                                </form>
+                                <form method="post" asp-action="DeletePosition" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn-icon delete" title="Удалить" onclick="return confirm('Удалить должность?')">🗑️</button>
+                                </form>
+                            </div>
+                        }
+                        <div class="add-form">
+                            <form method="post" asp-action="AddPosition">
+                                @Html.AntiForgeryToken()
+                                <div class="add-wrapper">
+                                    <input type="text" name="name" placeholder="Новая должность" required />
+                                    <button type="submit" class="btn-add">+ Добавить</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
