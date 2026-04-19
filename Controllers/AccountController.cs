@@ -25,7 +25,6 @@ namespace labsupport.Controllers
         }
 
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
@@ -49,7 +48,7 @@ namespace labsupport.Controllers
                     FirstName = "Тестовый",
                     LastName = "Пользователь",
                     IsActive = true,
-                    LastLoginAt = DateTime.Now  // ← заменил UtcNow на Now
+                    LastLoginAt = DateTime.Now  
                 };
             }
             else
@@ -87,22 +86,19 @@ namespace labsupport.Controllers
 
                 return RedirectToLocal(model.ReturnUrl);
             }
-
             ModelState.AddModelError(string.Empty, "Неверный логин или пароль");
             return View(model);
         }
 
         private IActionResult RedirectToLocal(string? returnUrl)
         {
-            // Если есть returnUrl и он безопасный (ведет на наш сайт) -> идем туда
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
                 return Redirect(returnUrl);
             }
             else
             {
-                // ЕСЛИ returnUrl НЕТ (обычный вход) -> ИДЕМ НА СТРАНИЦУ ЗАЯВОК ⬇️
-                return RedirectToAction(nameof(Index), "Home");
+                return RedirectToRoute("TicketIndex");  
             }
         }
         [HttpPost]

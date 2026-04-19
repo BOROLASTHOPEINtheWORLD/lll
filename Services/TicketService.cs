@@ -22,6 +22,10 @@ namespace labsupport.Services
               int? priority,
               int page,
               int pageSize = 10);
+        Task<TicketDetailsViewModel?> GetTicketDetailsViewModelAsync(long id, int currentUserId);
+        Task<TicketComment> AddCommentAsync(long ticketId, int userId, string content, bool isInternal, IFormFile[]? attachments);
+        Task UpdateTicketStatusAsync(long ticketId, short statusId, int userId);
+        Task UpdateTicketAssignmentAsync(long ticketId, int assignedToId, int userId);
     }
     public class TicketService : ITicketService
     {
@@ -250,8 +254,197 @@ namespace labsupport.Services
 
             return (tickets, totalCount);
         }
+        public async Task<TicketDetailsViewModel?> GetTicketDetailsViewModelAsync(long id, int currentUserId)
+        {
+            var ticket = await _context.Tickets
+                .Include(t => t.Category)
+                .Include(t => t.CreatedBy)
+                    .ThenInclude(u => u.Department)
+                .Include(t => t.CreatedBy)
+                    .ThenInclude(u => u.Position)
+                .Include(t => t.AssignedTo)
+                    .ThenInclude(u => u.Department)
+                .Include(t => t.AssignedTo)
+                    .ThenInclude(u => u.Position)
+                .Include(t => t.Status)
+                .Include(t => t.TicketAttachments)
+                .Include(t => t.SatisfactionRating)
+                .FirstOrDefaultAsync(t => t.Id == id && (t.CreatedById == currentUserId || t.AssignedToId == currentUserId));
+
+            if (ticket == null)
+                return null;
+
+            var comments = await _context.TicketComments
+                .Include(c => c.User)
+                    .ThenInclude(u => u.Department)
+                .Include(c => c.EditedBy)
+                .Include(c => c.MessageAttachments)
+                .Where(c => c.TicketId == id)
+                .OrderBy(c => c.CreatedAt)
+                .ToListAsync();
+
+            var history = await _context.TicketHistories
+                .Include(h => h.User)
+                .Where(h => h.TicketId == id)
+                .OrderByDescending(h => h.ChangedAt)
+                .ToListAsync();
+
+            var currentUser = await _context.Users.FindAsync(currentUserId);
+
+            return new TicketDetailsViewModel
+            {
+                Ticket = ticket,
+                Comments = comments,
+                History = history,
+                Categories = await GetCategoriesAsync(),
+                AvailableAssignees = await GetAvailableAssigneesAsync(),
+                CurrentUser = currentUser!
+            };
+        }
+
+        public async Task<TicketComment> AddCommentAsync(long ticketId, int userId, string content, bool isInternal, IFormFile[]? attachments)
+        {
+            var comment = new TicketComment
+            {
+                TicketId = ticketId,
+                UserId = userId,
+                Content = content,
+                IsInternal = isInternal,
+                CreatedAt = DateTime.Now,
+                EditedById = 0
+            };
+
+            _context.TicketComments.Add(comment);
+            await _context.SaveChangesAsync();
+
+            // Обновляем UpdatedAt у заявки
+            var ticket = await _context.Tickets.FindAsync(ticketId);
+            if (ticket != null)
+            {
+                ticket.UpdatedAt = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+
+            // Сохраняем вложения если есть
+            if (attachments != null && attachments.Length > 0)
+            {
+                await SaveMessageAttachmentsAsync(comment.Id, attachments);
+            }
+
+            // Добавляем запись в историю
+            var history = new TicketHistory
+            {
+                TicketId = ticketId,
+                UserId = userId,
+                FieldName = "Комментарий",
+                OldValue = null,
+                NewValue = isInternal ? "Добавлен внутренний комментарий" : "Добавлен комментарий",
+                ChangedAt = DateTime.Now
+            };
+            _context.TicketHistories.Add(history);
+            await _context.SaveChangesAsync();
+
+            return comment;
+        }
+
+        private async Task SaveMessageAttachmentsAsync(long commentId, IFormFile[] attachments)
+        {
+            var comment = await _context.TicketComments
+                .Include(c => c.Ticket)
+                .FirstOrDefaultAsync(c => c.Id == commentId);
+
+            if (comment == null) return;
+
+            var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tickets", comment.TicketId.ToString(), "comments");
+
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            foreach (var file in attachments)
+            {
+                if (file.Length == 0) continue;
+
+                var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                var relativePath = $"/uploads/tickets/{comment.TicketId}/comments/{uniqueFileName}";
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var attachment = new MessageAttachment
+                {
+                    CommentId = commentId,
+                    FileName = file.FileName,
+                    FilePath = relativePath,
+                    UploadedAt = DateTime.Now
+                };
+
+                _context.MessageAttachments.Add(attachment);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateTicketStatusAsync(long ticketId, short statusId, int userId)
+        {
+            var ticket = await _context.Tickets.FindAsync(ticketId);
+            if (ticket == null) return;
+
+            var oldStatusId = ticket.StatusId;
+            ticket.StatusId = statusId;
+            ticket.UpdatedAt = DateTime.Now;
+
+            if (statusId == 4) // Завершена
+            {
+                ticket.ResolvedAt = DateTime.Now;
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Добавляем запись в историю
+            var status = await _context.TicketStatuses.FindAsync(statusId);
+            var history = new TicketHistory
+            {
+                TicketId = ticketId,
+                UserId = userId,
+                FieldName = "Статус",
+                OldValue = oldStatusId.ToString(),
+                NewValue = status?.Name ?? statusId.ToString(),
+                ChangedAt = DateTime.Now
+            };
+            _context.TicketHistories.Add(history);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateTicketAssignmentAsync(long ticketId, int assignedToId, int userId)
+        {
+            var ticket = await _context.Tickets.FindAsync(ticketId);
+            if (ticket == null) return;
+
+            var oldAssignedToId = ticket.AssignedToId;
+            ticket.AssignedToId = assignedToId;
+            ticket.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            var assignee = await _context.Users.FindAsync(assignedToId);
+            var history = new TicketHistory
+            {
+                TicketId = ticketId,
+                UserId = userId,
+                FieldName = "Исполнитель",
+                OldValue = oldAssignedToId.ToString(),
+                NewValue = $"{assignee?.LastName} {assignee?.FirstName}" ?? assignedToId.ToString(),
+                ChangedAt = DateTime.Now
+            };
+            _context.TicketHistories.Add(history);
+            await _context.SaveChangesAsync();
+        }
     }
 
 }
-
+   
 

@@ -1,11 +1,12 @@
 ﻿using labsupport.Models;
 using labsupport.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace labsupport.Controllers
 {
-    [Authorize]
+   /* [Authorize(Roles = "1")]*/
     public class ReferenceController : BaseController
     {
         private readonly ICategoriesService _categoriesService;
@@ -24,11 +25,6 @@ namespace labsupport.Controllers
 
         public async Task<IActionResult> Index()
         {
-            if (!IsAdmin)
-            {
-                TempData["Error"] = "Доступ запрещен. Только для администраторов.";
-                return RedirectToAction("Index", "Home");
-            }
 
             // Получаем все данные через один сервис
             ViewBag.MainCategories = await _categoriesService.GetAllMainCategoriesAsync();

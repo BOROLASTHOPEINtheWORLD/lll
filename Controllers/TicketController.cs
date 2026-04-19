@@ -12,13 +12,14 @@ namespace labsupport.Controllers
         private readonly ITicketService _ticketService;
         private readonly ILogger<TicketController> _logger;
 
+
         public TicketController(ITicketService ticketService, ILogger<TicketController> logger)
         {
             _ticketService = ticketService;
             _logger = logger;
         }
 
-        [HttpGet]
+        [HttpGet("tickets", Name = "TicketIndex")]
         public async Task<IActionResult> Index(string search, int? statusId, int? priority, int page = 1)
         {
 
@@ -43,13 +44,77 @@ namespace labsupport.Controllers
             if (id == null) return NotFound();
 
             var userId = GetCurrentUserId();
-            var ticket = await _ticketService.GetTicketByIdAsync(id.Value, userId);
+            var viewModel = await _ticketService.GetTicketDetailsViewModelAsync(id.Value, userId);
 
-            if (ticket == null) return NotFound();
-            return View(ticket);
+            if (viewModel == null) return NotFound();
+            return View(viewModel);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddComment(long ticketId, string content, bool isInternal, IFormFile[]? attachments)
+        {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                TempData["Error"] = "Введите текст комментария";
+                return RedirectToAction("Details", new { id = ticketId });
+            }
+
+            try
+            {
+                await _ticketService.AddCommentAsync(ticketId, userId, content, isInternal, attachments);
+                TempData["Success"] = "Комментарий добавлен";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при добавлении комментария");
+                TempData["Error"] = "Не удалось добавить комментарий";
+            }
+
+            return RedirectToAction("Details", new { id = ticketId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStatus(long ticketId, short statusId)
+        {
+            var userId = GetCurrentUserId();
+            await _ticketService.UpdateTicketStatusAsync(ticketId, statusId, userId);
+            return RedirectToAction("Details", new { id = ticketId });
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateAssignment(long ticketId, int assignedToId)
+        {
+            var userId = GetCurrentUserId();
+            await _ticketService.UpdateTicketAssignmentAsync(ticketId, assignedToId, userId);
+            return RedirectToAction("Details", new { id = ticketId });
+        }
         [HttpGet]
+        public async Task<IActionResult> GetComments(long ticketId)
+        {
+            var userId = GetCurrentUserId();
+            var viewModel = await _ticketService.GetTicketDetailsViewModelAsync(ticketId, userId);
+
+            if (viewModel == null) return NotFound();
+
+            return Json(viewModel.Comments.Select(c => new
+            {
+                c.Id,
+                c.Content,
+                c.IsInternal,
+                CreatedAt = c.CreatedAt?.ToString("dd.MM.yyyy HH:mm"),
+                AuthorName = $"{c.User.LastName} {c.User.FirstName}",
+                AuthorAvatar = c.User.AvatarPath,
+                Attachments = c.MessageAttachments.Select(a => new
+                {
+                    a.FileName,
+                    a.FilePath
+                }).ToList()
+            }));
+        }
         public async Task<IActionResult> Create()
         {
             // Загружаем категории

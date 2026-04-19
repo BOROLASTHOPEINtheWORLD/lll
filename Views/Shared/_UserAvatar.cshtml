@@ -2,11 +2,30 @@
 
 @if (!string.IsNullOrEmpty(Model?.AvatarPath))
 {
-    <img src="@Model.AvatarPath" alt="Avatar" class="@(ViewBag.AvatarSize == "small" ? "avatar-table" : "avatar-default")" />
+    <img src="@Model.AvatarPath" alt="Avatar" class="@(ViewBag.AvatarSize == "small" ? "avatar-icon" : "avatar-default")" />
 }
 else
 {
-    <div class="@(ViewBag.AvatarSize == "small" ? "avatar-table-placeholder" : "avatar-default-placeholder")">
-        @((Model?.FirstName?.FirstOrDefault().ToString() ?? "?") + (Model?.LastName?.FirstOrDefault().ToString() ?? ""))
+    <div class="@(ViewBag.AvatarSize == "small" ? "avatar-icon-placeholder" : "avatar-default-placeholder")">
+        @((Model?.FirstName?.FirstOrDefault().ToString()) + (Model?.LastName?.FirstOrDefault().ToString()))
     </div>
 }
+
+@* @model dynamic
+
+@if (Model != null && Model.User != null)
+{
+    var user = Model.User as labsupport.Models.User;
+    var size = Model.Size ?? "default";
+
+    if (!string.IsNullOrEmpty(user?.AvatarPath))
+    {
+        <img src="@user.AvatarPath" alt="Avatar" class="avatar-@size" />
+    }
+    else
+    {
+        <div class="avatar-@size-placeholder">
+            @((user?.FirstName?.FirstOrDefault().ToString() ?? "?") + (user?.LastName?.FirstOrDefault().ToString() ?? ""))
+        </div>
+    }
+} *@

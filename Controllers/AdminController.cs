@@ -35,6 +35,9 @@ namespace labsupport.Controllers
             var (users, totalCount, activeCount, inactiveCount) =
                 await _userService.GetUsersAsync(search, roleId, isActive);
 
+            var result = await _userService.GetUsersAsync(search, roleId, isActive);
+
+
             ViewBag.Users = users;
             ViewBag.Roles = await _roleService.GetAllRolesAsync();
             ViewBag.SearchTerm = search ?? "";

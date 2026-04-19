@@ -26,7 +26,7 @@ namespace labsupport.Helpers
                 if (lastTicket != null && !string.IsNullOrEmpty(lastTicket.TicketNumber))
                 {
                     var parts = lastTicket.TicketNumber.Split('-');
-                    if (parts.Length == 3 && int.TryParse(parts[2], out var lastSeq))
+                    if (int.TryParse(parts[2], out var lastSeq))
                     {
                         sequence = lastSeq + 1;
                     }

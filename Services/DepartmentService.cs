@@ -73,7 +73,6 @@ namespace labsupport.Services
             try
             {
                 var entity = await _context.Departments.FindAsync(id);
-                if (entity == null) return (false, "Отдел не найден");
 
                 // Проверяем, есть ли пользователи с этим отделом
                 var hasUsers = await _context.Users.AnyAsync(u => u.DepartmentId == id);

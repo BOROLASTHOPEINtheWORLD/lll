@@ -1756,7 +1756,25 @@ textarea.form-control {
     color: var(--primary-red);
     background: linear-gradient(135deg, #FFF8F8, #F0F2F5);
 }
+.avatar-medium {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
 
+.avatar-medium-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFF8F8, #F0F2F5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-red);
+}
 .btn-remove-avatar {
     margin-top: 8px;
     background: #FFF3F3;
@@ -1895,14 +1913,14 @@ textarea.form-control {
         cursor: pointer;
     }
 
-.avatar-table {
+.avatar-icon {
     width: 32px;
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
 }
 
-.avatar-table-placeholder {
+.avatar-icon-placeholder {
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -2231,5 +2249,446 @@ textarea.form-control {
 @media (max-width: 1024px) {
     .reference-layout {
         grid-template-columns: 1fr;
+    }
+}
+
+.ticket-details-page {
+    background: var(--gray-light);
+    padding: 24px;
+    overflow: hidden;
+}
+
+.ticket-details-layout {
+    display: grid;
+    grid-template-columns: 1fr 450px;
+    gap: 24px;
+    height: calc(100vh - 120px);
+    max-height: 100%;
+}
+
+.ticket-info-panel {
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.ticket-header {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+}
+
+.ticket-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.ticket-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+}
+
+.ticket-number {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.ticket-badges {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.priority-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.info-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 16px;
+}
+
+    .info-card h3 {
+        font-size: 1rem;
+        margin-bottom: 16px;
+        color: var(--text-dark);
+    }
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.info-item label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.info-item span {
+    font-size: 0.95rem;
+}
+
+    .info-item span.overdue {
+        color: #ef4444;
+        font-weight: 600;
+    }
+
+.info-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.ticket-description {
+    line-height: 1.6;
+    color: var(--text-dark);
+    white-space: pre-wrap;
+}
+
+.user-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+    .user-info strong {
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .user-info p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin: 2px 0;
+    }
+
+.attachments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.attachment-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--gray-light);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-dark);
+    transition: background 0.2s;
+}
+
+    .attachment-item:hover {
+        background: var(--primary-red-light);
+    }
+
+.history-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.history-item {
+    display: flex;
+    gap: 12px;
+    padding-left: 12px;
+    border-left: 2px solid var(--border-color);
+}
+
+.history-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    min-width: 120px;
+}
+
+.history-content {
+    font-size: 0.9rem;
+}
+
+.actions-card .action-form {
+    margin-bottom: 16px;
+}
+
+.actions-card label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+/* Чат */
+.chat-panel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+}
+
+.chat-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .chat-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .chat-header span {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.no-messages {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.message {
+    display: flex;
+    gap: 12px;
+}
+
+.message-own {
+    flex-direction: row-reverse;
+}
+
+.message-avatar img,
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    background: var(--primary-red);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.message-content {
+    max-width: 75%;
+    background: var(--gray-light);
+    padding: 12px 16px;
+    border-radius: 12px;
+}
+
+.message-own .message-content {
+    background: var(--primary-red);
+    color: white;
+}
+
+.message-internal .message-content {
+    background: #FFF3E0;
+    border: 1px solid #FFE0B2;
+}
+
+.message-header {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+}
+
+.message-own .message-author {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.message-time {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+.message-own .message-time {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.badge-internal {
+    background: #F57C00;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+}
+
+.message-text {
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.message-attachments {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.attachment-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.85rem;
+}
+
+.message-own .attachment-link {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.message-edited {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    font-style: italic;
+}
+
+.chat-input-area {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--gray-light);
+}
+
+.comment-options {
+    margin-bottom: 12px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.comment-textarea {
+    width: 100%;
+    padding: 12px;
+    padding-right: 120px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    resize: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+    .comment-textarea:focus {
+        outline: none;
+        border-color: var(--primary-red);
+    }
+
+.input-actions {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    display: flex;
+    gap: 8px;
+}
+
+.btn-attach,
+.btn-send {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.btn-attach {
+    background: transparent;
+    color: var(--text-secondary);
+}
+
+    .btn-attach:hover {
+        color: var(--primary-red);
+        background: var(--primary-red-light);
+    }
+
+.btn-send {
+    background: var(--primary-red);
+    color: white;
+}
+
+    .btn-send:hover {
+        background: var(--primary-red-hover);
+    }
+
+.selected-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.selected-file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+    .selected-file .file-size {
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+    }
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .ticket-details-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .chat-panel {
+        height: 600px;
     }
 }

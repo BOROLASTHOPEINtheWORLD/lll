@@ -54,8 +54,9 @@ namespace labsupport.Services
             new Claim(ClaimTypes.Role, user.Role.Name),
             new Claim("FullName", $"{user.LastName} {user.FirstName}")
         };
-
+            Console.WriteLine("ПОЛЬЗОВАТЕЛЬ"+user.Role.Name);
             return new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+           
         }
 
 
