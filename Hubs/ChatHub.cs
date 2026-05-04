@@ -3,6 +3,7 @@ using labsupport.Services;
 using labsupport.ViewModels;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using labsupport.Hubs;
 
 namespace labsupport.Hubs
 {
@@ -50,6 +51,8 @@ namespace labsupport.Hubs
 
                 // Сохраняем комментарий через сервис
                 var comment = await _ticketService.AddCommentAsync(ticketId, userId, content, isInternal, null);
+
+                // Если есть вложения, привязываем их к комментарию
                 if (attachments != null && attachments.Count > 0)
                 {
                     foreach (var attachment in attachments)
@@ -57,6 +60,7 @@ namespace labsupport.Hubs
                         await _ticketService.AttachFileToCommentAsync(comment.Id, attachment.FilePath, attachment.FileName);
                     }
                 }
+
                 // Загружаем полные данные комментария
                 var fullComment = await _ticketService.GetCommentWithDetailsAsync(comment.Id);
 
