@@ -125,14 +125,26 @@
                         headers: {
                             'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                         }
-                    }).then(res => res.json());
+                    })
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error(`Upload failed with status ${res.status}`);
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            console.log('File uploaded:', data);
+                            return data;
+                        });
                 });
 
                 attachments = await Promise.all(uploadPromises);
+                console.log('All attachments uploaded:', attachments);
             }
 
-            // Теперь отправляем сообщение через SignalR с вложениями:
+            console.log('Sending message with attachments:', attachments);
             await this.connection.invoke('SendMessage', this.ticketId, content, isInternal, attachments);
+            console.log('Message sent successfully');
 
             // Очищаем форму
             if (contentInput) contentInput.value = '';

@@ -1,4 +1,5 @@
-﻿using labsupport.Models;
+﻿using labsupport.Hubs;
+using labsupport.Models;
 using labsupport.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -135,7 +136,7 @@ namespace labsupport
             app.UseStaticFiles();
             app.MapStaticAssets();
 
-            app.MapHub<labsupport.Hubs.ChatHub>("/chathub");
+            app.MapHub<ChatHub>("/chathub");
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Account}/{action=Login}/{id?}")
