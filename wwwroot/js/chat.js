@@ -123,7 +123,8 @@
                         method: 'POST',
                         body: formData,
                         headers: {
-                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                            // ИСПРАВЛЕННАЯ СТРОКА НИЖЕ:
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                         }
                     })
                         .then(res => {
@@ -142,6 +143,7 @@
                 console.log('All attachments uploaded:', attachments);
             }
 
+            // Теперь отправляем сообщение через SignalR с вложениями:
             console.log('Sending message with attachments:', attachments);
             await this.connection.invoke('SendMessage', this.ticketId, content, isInternal, attachments);
             console.log('Message sent successfully');
@@ -152,7 +154,7 @@
             this.renderPendingFiles();
         } catch (err) {
             console.error('Error sending message:', err);
-            alert('Ошибка при отправке сообщения');
+            alert(`Ошибка при отправке сообщения: ${err.message || err}`);
         }
     },
 

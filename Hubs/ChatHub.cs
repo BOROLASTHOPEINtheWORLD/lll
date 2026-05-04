@@ -3,7 +3,7 @@ using labsupport.Services;
 using labsupport.ViewModels;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using labsupport.Hubs;
+using System.Text.Json;
 
 namespace labsupport.Hubs
 {
@@ -48,15 +48,30 @@ namespace labsupport.Hubs
                     await Clients.Caller.SendAsync("ReceiveError", "Пользователь не авторизован");
                     return;
                 }
+                List<AttachmentDto>? attachmentList = null;
+                if (attachments != null)
+                {
+                    _logger.LogInformation("Attachments received: {Attachments}", attachments.ToString());
+                    var json = JsonSerializer.Serialize(attachments);
+                    _logger.LogInformation("Serialized attachments JSON: {Json}", json);
+                    attachmentList = JsonSerializer.Deserialize<List<AttachmentDto>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    });
+                    _logger.LogInformation("Deserialized {Count} attachments", attachmentList?.Count ?? 0);
+                }
 
-                // Сохраняем комментарий через сервис
+                // Сохраняем комментарий через сервис (без вложений, так как будем привязывать их отдельно)
                 var comment = await _ticketService.AddCommentAsync(ticketId, userId, content, isInternal, null);
 
                 // Если есть вложения, привязываем их к комментарию
-                if (attachments != null && attachments.Count > 0)
+                if (attachmentList != null && attachmentList.Count > 0)
                 {
-                    foreach (var attachment in attachments)
+                    _logger.LogInformation("Attaching {Count} files to comment {CommentId}", attachmentList.Count, comment.Id);
+                    foreach (var attachment in attachmentList)
                     {
+                        _logger.LogInformation("Attaching file: {FileName} at {FilePath}", attachment.FileName, attachment.FilePath);
                         await _ticketService.AttachFileToCommentAsync(comment.Id, attachment.FilePath, attachment.FileName);
                     }
                 }
@@ -73,7 +88,7 @@ namespace labsupport.Hubs
                     CreatedAt = fullComment.CreatedAt?.ToString("dd.MM.yyyy HH:mm"),
                     AuthorName = $"{fullComment.User.LastName} {fullComment.User.FirstName}",
                     AuthorAvatar = fullComment.User.AvatarPath,
-                    UserId = fullComment.UserId,
+                    fullComment.UserId,
                     EditedAt = fullComment.EditedAt?.ToString("dd.MM.yyyy HH:mm"),
                     Attachments = fullComment.MessageAttachments.Select(a => new
                     {
@@ -86,7 +101,7 @@ namespace labsupport.Hubs
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending message to ticket-{TicketId}", ticketId);
+                _logger.LogError(ex, "Error sending message to ticket-{TicketId}. Exception: {ExceptionMessage}, StackTrace: {StackTrace}", ticketId, ex.Message, ex.StackTrace);
                 await Clients.Caller.SendAsync("ReceiveError", $"Ошибка при отправке сообщения: {ex.Message}");
             }
         }
