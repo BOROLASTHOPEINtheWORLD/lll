@@ -6,7 +6,6 @@ namespace labsupport.Models;
 public partial class User
 {
     public int Id { get; set; }
-    public string Username { get; set; }
 
     public string Email { get; set; } = null!;
 
@@ -31,6 +30,9 @@ public partial class User
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? LastLoginAt { get; set; }
+
+    public string? Username { get; set; }
+
     public string? AvatarPath { get; set; }
 
     public virtual Department? Department { get; set; }
@@ -39,14 +41,11 @@ public partial class User
 
     public virtual Role Role { get; set; } = null!;
 
-
     public virtual ICollection<SatisfactionRating> SatisfactionRatings { get; set; } = new List<SatisfactionRating>();
 
     public virtual ICollection<Ticket> TicketAssignedTos { get; set; } = new List<Ticket>();
 
-    public virtual ICollection<TicketComment> TicketCommentEditedBies { get; set; } = new List<TicketComment>();
-
-    public virtual ICollection<TicketComment> TicketCommentUsers { get; set; } = new List<TicketComment>();
+    public virtual ICollection<TicketComment> TicketComments { get; set; } = new List<TicketComment>();
 
     public virtual ICollection<Ticket> TicketCreatedBies { get; set; } = new List<Ticket>();
 

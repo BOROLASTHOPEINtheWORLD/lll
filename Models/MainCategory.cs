@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 
 namespace labsupport.Models;
-
 public partial class MainCategory
 {
     public short Id { get; set; }

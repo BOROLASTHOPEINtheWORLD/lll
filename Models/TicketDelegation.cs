@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 
 namespace labsupport.Models;
-
 public partial class TicketDelegation
 {
     public long Id { get; set; }

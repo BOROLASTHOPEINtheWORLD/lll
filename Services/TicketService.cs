@@ -16,17 +16,20 @@ namespace labsupport.Services
         Task<List<Ticket>> GetUserTicketsAsync(int userId);
 
         Task<(List<Ticket> Tickets, int TotalCount)> GetFilteredTicketsAsync(
-              int userId,
-              string? search,
-              int? statusId,
-              int? priority,
-              int page,
-              int pageSize = 10);
+           int userId, string? search, int? statusId, int? priority, int page, int pageSize = 10);
         Task<TicketDetailsViewModel?> GetTicketDetailsViewModelAsync(long id, int currentUserId);
         Task<TicketComment> AddCommentAsync(long ticketId, int userId, string content, bool isInternal, IFormFile[]? attachments);
         Task UpdateTicketStatusAsync(long ticketId, short statusId, int userId);
         Task UpdateTicketAssignmentAsync(long ticketId, int assignedToId, int userId);
+        Task<TicketComment> GetCommentWithDetailsAsync(long commentId);
+        Task<TicketComment?> EditCommentAsync(long commentId, int userId, string newContent);
+        Task<bool> DeleteCommentAsync(long commentId, int userId);
+        Task SaveMessageAttachmentsAsync(long commentId, IFormFile[] attachments);
+        Task<(string fileName, string filePath)> SaveAttachmentAsync(IFormFile file);
+        Task<List<MessageAttachment>> GetCommentAttachmentsAsync(long commentId);
+        Task<List<TicketStatus>> GetAllStatusesAsync();
     }
+
     public class TicketService : ITicketService
     {
         private readonly LabsupportContext _context;
@@ -212,12 +215,7 @@ namespace labsupport.Services
         }
 
         public async Task<(List<Ticket> Tickets, int TotalCount)> GetFilteredTicketsAsync(
-        int userId,
-        string? search,
-        int? statusId,
-        int? priority,
-        int page,
-        int pageSize = 10)
+             int userId, string? search, int? statusId, int? priority, int page, int pageSize = 10)
         {
             var query = _context.Tickets
                 .Include(t => t.Status)
@@ -276,8 +274,6 @@ namespace labsupport.Services
 
             var comments = await _context.TicketComments
                 .Include(c => c.User)
-                    .ThenInclude(u => u.Department)
-                .Include(c => c.EditedBy)
                 .Include(c => c.MessageAttachments)
                 .Where(c => c.TicketId == id)
                 .OrderBy(c => c.CreatedAt)
@@ -290,6 +286,7 @@ namespace labsupport.Services
                 .ToListAsync();
 
             var currentUser = await _context.Users.FindAsync(currentUserId);
+            var statuses = await GetAllStatusesAsync();
 
             return new TicketDetailsViewModel
             {
@@ -298,7 +295,8 @@ namespace labsupport.Services
                 History = history,
                 Categories = await GetCategoriesAsync(),
                 AvailableAssignees = await GetAvailableAssigneesAsync(),
-                CurrentUser = currentUser!
+                CurrentUser = currentUser!,
+                Statuses = statuses
             };
         }
 
@@ -310,9 +308,8 @@ namespace labsupport.Services
                 UserId = userId,
                 Content = content,
                 IsInternal = isInternal,
-                CreatedAt = DateTime.Now,
-                EditedById = 0
-            };
+                CreatedAt = DateTime.Now
+            }; ;
 
             _context.TicketComments.Add(comment);
             await _context.SaveChangesAsync();
@@ -347,7 +344,7 @@ namespace labsupport.Services
             return comment;
         }
 
-        private async Task SaveMessageAttachmentsAsync(long commentId, IFormFile[] attachments)
+        public async Task SaveMessageAttachmentsAsync(long commentId, IFormFile[] attachments)
         {
             var comment = await _context.TicketComments
                 .Include(c => c.Ticket)
@@ -430,6 +427,8 @@ namespace labsupport.Services
             ticket.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
+
+            // Добавляем запись в историю
             var assignee = await _context.Users.FindAsync(assignedToId);
             var history = new TicketHistory
             {
@@ -443,8 +442,96 @@ namespace labsupport.Services
             _context.TicketHistories.Add(history);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<TicketComment> GetCommentWithDetailsAsync(long commentId)
+        {
+            return await _context.TicketComments
+                .Include(c => c.User)
+                    .ThenInclude(u => u.Department)
+                .Include(c => c.MessageAttachments)
+                .FirstOrDefaultAsync(c => c.Id == commentId)
+                    ?? throw new Exception("Комментарий не найден");
+        }
+
+        public async Task<TicketComment?> EditCommentAsync(long commentId, int userId, string newContent)
+        {
+            var comment = await _context.TicketComments.FindAsync(commentId);
+            if (comment == null || comment.UserId != userId)
+                return null;
+
+            comment.Content = newContent;
+            comment.EditedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            // Возвращаем обновленный комментарий с деталями
+            return await GetCommentWithDetailsAsync(commentId);
+        }
+
+        public async Task<bool> DeleteCommentAsync(long commentId, int userId)
+        {
+            var comment = await _context.TicketComments.FindAsync(commentId);
+            if (comment == null || comment.UserId != userId)
+                return false;
+
+            // Удаляем вложения
+            var attachments = await _context.MessageAttachments
+                .Where(a => a.CommentId == commentId)
+                .ToListAsync();
+
+            foreach (var attachment in attachments)
+            {
+                try
+                {
+                    var filePath = Path.Combine(_webHostEnvironment.WebRootPath, attachment.FilePath.TrimStart('/'));
+                    if (File.Exists(filePath))
+                        File.Delete(filePath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Не удалось удалить файл {FilePath}", attachment.FilePath);
+                }
+            }
+
+            _context.MessageAttachments.RemoveRange(attachments);
+
+            _context.TicketComments.Remove(comment);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+        public async Task<(string fileName, string filePath)> SaveAttachmentAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("Файл не указан");
+
+            var ext = Path.GetExtension(file.FileName);
+            var fileName = Guid.NewGuid() + ext;
+            var uploadsPath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+            Directory.CreateDirectory(uploadsPath);
+            var fullPath = Path.Combine(uploadsPath, fileName);
+
+            using (var stream = new FileStream(fullPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var relativePath = $"/uploads/{fileName}";
+            return (file.FileName, relativePath);
+        }
+        public async Task<List<MessageAttachment>> GetCommentAttachmentsAsync(long commentId)
+        {
+            return await _context.MessageAttachments
+                .Where(a => a.CommentId == commentId)
+                .ToListAsync();
+        }
+
+        public async Task<List<TicketStatus>> GetAllStatusesAsync()
+        {
+            return await _context.TicketStatuses
+                .OrderBy(s => s.Id)
+                .ToListAsync();
+        }
     }
 
 }
-   
-

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-
 namespace labsupport.Models;
 
 public partial class TicketComment
@@ -18,10 +17,6 @@ public partial class TicketComment
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? EditedAt { get; set; }
-
-    public int EditedById { get; set; }
-
-    public virtual User EditedBy { get; set; } = null!;
 
     public virtual ICollection<MessageAttachment> MessageAttachments { get; set; } = new List<MessageAttachment>();
 

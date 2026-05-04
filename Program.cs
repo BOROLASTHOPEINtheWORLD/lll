@@ -44,6 +44,8 @@ namespace labsupport
             builder.Services.AddScoped<PositionService>();
             builder.Services.AddScoped<ICategoriesService, CategoriesService>();
 
+            builder.Services.AddSignalR();
+
             var app = builder.Build();
 
 
@@ -123,7 +125,10 @@ namespace labsupport
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseStaticFiles();
             app.MapStaticAssets();
+
+            app.MapHub<labsupport.Hubs.ChatHub>("/chathub");
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Account}/{action=Login}/{id?}")

@@ -43,6 +43,13 @@ public partial class LabsupportContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+
+    }
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+   
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Department>(entity =>
@@ -208,6 +215,9 @@ public partial class LabsupportContext : DbContext
                 .ValueGeneratedOnAdd()
                 .HasColumnName("created_by_id");
             entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.DueDate)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("due_date");
             entity.Property(e => e.Priority).HasColumnName("priority");
             entity.Property(e => e.Resolution).HasColumnName("resolution");
             entity.Property(e => e.ResolvedAt)
@@ -224,11 +234,6 @@ public partial class LabsupportContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
-
-            entity.Property(e => e.DueDate)
-              .HasDefaultValueSql("CURRENT_TIMESTAMP")
-              .HasColumnType("timestamp without time zone")
-              .HasColumnName("due_date");
 
             entity.HasOne(d => d.AssignedTo).WithMany(p => p.TicketAssignedTos)
                 .HasForeignKey(d => d.AssignedToId)
@@ -274,7 +279,6 @@ public partial class LabsupportContext : DbContext
             entity.HasOne(d => d.Ticket).WithMany(p => p.TicketAttachments)
                 .HasForeignKey(d => d.TicketId)
                 .HasConstraintName("ticket_attachments_ticket_id_fkey");
-
         });
 
         modelBuilder.Entity<TicketComment>(entity =>
@@ -296,9 +300,6 @@ public partial class LabsupportContext : DbContext
             entity.Property(e => e.EditedAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("edited_at");
-            entity.Property(e => e.EditedById)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("edited_by_id");
             entity.Property(e => e.IsInternal)
                 .HasDefaultValue(false)
                 .HasColumnName("is_internal");
@@ -307,16 +308,11 @@ public partial class LabsupportContext : DbContext
                 .ValueGeneratedOnAdd()
                 .HasColumnName("user_id");
 
-            entity.HasOne(d => d.EditedBy).WithMany(p => p.TicketCommentEditedBies)
-                .HasForeignKey(d => d.EditedById)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("ticket_comments_edited_by_id_fkey");
-
             entity.HasOne(d => d.Ticket).WithMany(p => p.TicketComments)
                 .HasForeignKey(d => d.TicketId)
                 .HasConstraintName("ticket_comments_ticket_id_fkey");
 
-            entity.HasOne(d => d.User).WithMany(p => p.TicketCommentUsers)
+            entity.HasOne(d => d.User).WithMany(p => p.TicketComments)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("ticket_comments_user_id_fkey");
@@ -424,11 +420,8 @@ public partial class LabsupportContext : DbContext
 
             entity.HasIndex(e => e.Email, "users_email_key").IsUnique();
 
-
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Username)
-                .HasMaxLength(50) 
-                .HasColumnName("username");
+            entity.Property(e => e.AvatarPath).HasColumnName("avatar_path");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -437,9 +430,6 @@ public partial class LabsupportContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .HasColumnName("email");
-            entity.Property(e => e.AvatarPath)
-                .HasMaxLength(100)
-                .HasColumnName("avatar_path");
             entity.Property(e => e.FirstName)
                 .HasMaxLength(50)
                 .HasColumnName("first_name");
@@ -463,6 +453,7 @@ public partial class LabsupportContext : DbContext
                 .HasColumnName("phone");
             entity.Property(e => e.PositionId).HasColumnName("position_id");
             entity.Property(e => e.RoleId).HasColumnName("role_id");
+            entity.Property(e => e.Username).HasColumnName("username");
 
             entity.HasOne(d => d.Department).WithMany(p => p.Users)
                 .HasForeignKey(d => d.DepartmentId)

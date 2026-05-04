@@ -1960,8 +1960,8 @@ textarea.form-control {
     gap: 12px;
 }
 
-    .user-cell .avatar-table,
-    .user-cell .avatar-table-placeholder {
+    .user-cell .avatar-icon,
+    .user-cell .avatar-icon-placeholder {
         flex-shrink: 0;
     }
 
@@ -2691,4 +2691,84 @@ textarea.form-control {
     .chat-panel {
         height: 600px;
     }
+}
+
+/* === AttachmentCell — как в VK === */
+.AttachmentCell {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    min-height: 56px;
+    padding: 8px 0;
+    transition: opacity 0.2s ease;
+    cursor: default;
+    text-decoration: none;
+    color: var(--color_text_primary);
+}
+
+.AttachmentCell--clickable {
+    cursor: pointer;
+}
+
+.AttachmentCell__imageBlockContainer {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.AttachmentCell__imageBlockBackground {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(138, 138, 158, 0.1);
+    border-radius: 8px;
+}
+
+.AttachmentCell__imageBlock {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+    .AttachmentCell__imageBlock svg {
+        width: 24px;
+        height: 24px;
+        fill: currentColor;
+    }
+
+.AttachmentCell__infoBlockContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.AttachmentCell__infoBlock {
+    display: flex;
+    flex-direction: column;
+}
+
+.AttachmentCell__headline {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    margin: 0;
+    color: inherit;
+}
+
+.AttachmentCell__footnote {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--color_text_secondary);
+    margin-top: 2px;
+}
+
+/* Для изображений — фон вместо иконки */
+.AttachmentCell__imageBlock.image {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }

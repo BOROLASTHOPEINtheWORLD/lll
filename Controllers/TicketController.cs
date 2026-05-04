@@ -56,9 +56,9 @@ namespace labsupport.Controllers
         {
             var userId = GetCurrentUserId();
 
-            if (string.IsNullOrWhiteSpace(content))
+            if (string.IsNullOrWhiteSpace(content) && (attachments == null || attachments.Length == 0))
             {
-                TempData["Error"] = "Введите текст комментария";
+                TempData["Error"] = "Введите текст комментария или прикрепите файл";
                 return RedirectToAction("Details", new { id = ticketId });
             }
 
@@ -77,6 +77,66 @@ namespace labsupport.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> EditComment(long commentId, string content)
+        {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return BadRequest("Текст комментария не может быть пустым");
+            }
+
+            try
+            {
+                var updatedComment = await _ticketService.EditCommentAsync(commentId, userId, content);
+
+                if (updatedComment == null)
+                {
+                    return NotFound("Комментарий не найден или у вас нет прав на редактирование");
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    comment = new
+                    {
+                        id = updatedComment.Id,
+                        content = updatedComment.Content,
+                        editedAt = updatedComment.EditedAt?.ToString("dd.MM.yyyy HH:mm")
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при редактировании комментария");
+                return BadRequest("Не удалось редактировать комментарий");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteComment(long commentId)
+        {
+            var userId = GetCurrentUserId();
+
+            try
+            {
+                var result = await _ticketService.DeleteCommentAsync(commentId, userId);
+
+                if (!result)
+                {
+                    return NotFound("Комментарий не найден или у вас нет прав на удаление");
+                }
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при удалении комментария");
+                return BadRequest("Не удалось удалить комментарий");
+            }
+        }
+
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(long ticketId, short statusId)
         {
@@ -84,6 +144,7 @@ namespace labsupport.Controllers
             await _ticketService.UpdateTicketStatusAsync(ticketId, statusId, userId);
             return RedirectToAction("Details", new { id = ticketId });
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateAssignment(long ticketId, int assignedToId)
@@ -92,6 +153,27 @@ namespace labsupport.Controllers
             await _ticketService.UpdateTicketAssignmentAsync(ticketId, assignedToId, userId);
             return RedirectToAction("Details", new { id = ticketId });
         }
+        [HttpPost("upload-attachment")]
+        [Authorize]
+        public async Task<IActionResult> UploadAttachment(IFormFile file)
+        {
+            try
+            {
+                var (originalName, filePath) = await _ticketService.SaveAttachmentAsync(file);
+                return Json(new { fileName = originalName, filePath });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при загрузке вложения");
+                return StatusCode(500, "Ошибка сервера");
+            }
+        }
+
+
         [HttpGet]
         public async Task<IActionResult> GetComments(long ticketId)
         {
@@ -108,12 +190,20 @@ namespace labsupport.Controllers
                 CreatedAt = c.CreatedAt?.ToString("dd.MM.yyyy HH:mm"),
                 AuthorName = $"{c.User.LastName} {c.User.FirstName}",
                 AuthorAvatar = c.User.AvatarPath,
+                UserId = c.UserId,
+                EditedAt = c.EditedAt?.ToString("dd.MM.yyyy HH:mm"),
                 Attachments = c.MessageAttachments.Select(a => new
                 {
                     a.FileName,
                     a.FilePath
                 }).ToList()
             }));
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetStatuses()
+        {
+            var statuses = await _ticketService.GetAllStatusesAsync();
+            return Json(statuses.Select(s => new { s.Id, s.Name }));
         }
         public async Task<IActionResult> Create()
         {

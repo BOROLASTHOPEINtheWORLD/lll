@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 
 namespace labsupport.Models;
-
 public partial class TicketAttachment
 {
     public long Id { get; set; }
@@ -16,5 +15,4 @@ public partial class TicketAttachment
     public DateTime? UploadedAt { get; set; }
 
     public virtual Ticket Ticket { get; set; } = null!;
-
 }

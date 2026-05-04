@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-
 namespace labsupport.Models;
 
 public partial class Ticket
@@ -30,9 +29,10 @@ public partial class Ticket
     public DateTime? ResolvedAt { get; set; }
 
     public DateTime? ClosedAt { get; set; }
-    public DateTime? DueDate { get; set; }
 
     public string? Resolution { get; set; }
+
+    public DateTime? DueDate { get; set; }
 
     public virtual User AssignedTo { get; set; } = null!;
 

@@ -329,23 +329,21 @@
             } else {
                 subcategoryGroup.style.display = 'none';
             }
-        
         });
     }
+
     // ========== ОБЪЕДИНЕНИЕ ДАТЫ И ВРЕМЕНИ ==========
     const dueDateInput = document.getElementById('DueDate');
     const dueTimeSelect = document.getElementById('DueTime');
     let combinedDateTime = null;
 
     if (dueDateInput) {
-        // Исправляем минимальную дату
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         dueDateInput.min = `${year}-${month}-${day}`;
 
-        // При изменении даты или времени - объединяем
         function updateDateTime() {
             if (dueDateInput.value && dueTimeSelect.value) {
                 const combined = new Date(`${dueDateInput.value}T${dueTimeSelect.value}`);
@@ -358,136 +356,12 @@
 
         dueDateInput.addEventListener('change', updateDateTime);
         dueTimeSelect.addEventListener('change', updateDateTime);
-    }
-    // ========== РАБОТА С ФАЙЛАМИ (ПРЕВЬЮ) ==========
+
+            // ========== РАБОТА С ФАЙЛАМИ ==========
     const dropArea = document.getElementById('fileDropArea');
     const fileInput = document.getElementById('fileInput');
     const previewContainer = document.getElementById('filePreviewContainer');
     let selectedFiles = [];
-
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    function getFileIcon(fileType, fileName) {
-        const ext = fileName.split('.').pop().toLowerCase();
-
-        if (fileType === 'application/pdf' || ext === 'pdf') {
-            return `<svg width="40" height="40"><use href="#file-pdf"/></svg>`;
-        }
-        if (fileType.includes('word') || ext === 'doc' || ext === 'docx') {
-            return `<svg width="40" height="40"><use href="#file-word"/></svg>`;
-        }
-        if (fileType.includes('excel') || ext === 'xls' || ext === 'xlsx') {
-            return `<svg width="40" height="40"><use href="#file-excel"/></svg>`;
-        }
-        if (fileType.includes('powerpoint') || ext === 'ppt' || ext === 'pptx') {
-            return `<svg width="40" height="40"><use href="#file-ppt"/></svg>`;
-        }
-        if (fileType.startsWith('image/')) {
-            return null;
-        }
-        return `<svg width="40" height="40"><use href="#file-generic"/></svg>`;
-    }
-
-    // Функция открытия изображения в модальном окне
-    function openImageModal(imageUrl, imageName) {
-        const modal = document.getElementById('imageModal');
-        const modalImg = document.getElementById('modalImage');
-        const modalCaption = document.getElementById('modalCaption');
-
-        if (modal && modalImg) {
-            modal.style.display = 'flex';
-            modalImg.src = imageUrl;
-            modalCaption.textContent = imageName;
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    // Закрытие модального окна
-    function closeImageModal() {
-        const modal = document.getElementById('imageModal');
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.style.overflow = '';
-        }
-    }
-
-    function createFilePreview(file) {
-        const previewItem = document.createElement('div');
-        previewItem.className = 'file-preview-item';
-        previewItem.dataset.fileName = file.name;
-
-        const previewContent = document.createElement('div');
-
-        if (file.type.startsWith('image/')) {
-            previewContent.className = 'file-preview-image';
-            const reader = new FileReader();
-
-            // Сохраняем результат чтения файла в переменную
-            let imageDataUrl = null;
-
-            reader.onload = (e) => {
-                imageDataUrl = e.target.result;
-                previewContent.style.backgroundImage = `url(${imageDataUrl})`;
-                previewContent.style.backgroundSize = 'cover';
-                previewContent.style.backgroundPosition = 'center';
-            };
-            reader.readAsDataURL(file);
-
-            // Добавляем клик отдельно, используя сохраненный imageDataUrl
-            previewItem.style.cursor = 'pointer';
-            previewItem.addEventListener('click', (e) => {
-                if (e.target.closest('.file-preview-remove')) return;
-                if (imageDataUrl) {
-                    openImageModal(imageDataUrl, file.name);
-                } else {
-                    // Если данные еще не загрузились, ждем
-                    const checkInterval = setInterval(() => {
-                        if (imageDataUrl) {
-                            clearInterval(checkInterval);
-                            openImageModal(imageDataUrl, file.name);
-                        }
-                    }, 50);
-                }
-            });
-
-        } else {
-            previewContent.className = 'file-preview-icon';
-            previewContent.innerHTML = getFileIcon(file.type, file.name);
-            previewItem.style.cursor = 'default';
-        }
-
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'file-preview-info';
-        infoDiv.innerHTML = `
-            <div class="file-preview-name" title="${file.name}">${file.name.length > 12 ? file.name.substring(0, 9) + '...' : file.name}</div>
-            <div class="file-preview-size">${formatFileSize(file.size)}</div>
-        `;
-
-        const removeBtn = document.createElement('div');
-        removeBtn.className = 'file-preview-remove';
-        removeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="white"/></svg>';
-        removeBtn.onclick = (e) => {
-            e.stopPropagation();
-            const index = selectedFiles.findIndex(f => f.name === file.name && f.size === file.size);
-            if (index !== -1) {
-                selectedFiles.splice(index, 1);
-                updateFileInput();
-            }
-            previewItem.remove();
-        };
-
-        previewItem.appendChild(previewContent);
-        previewItem.appendChild(infoDiv);
-        previewItem.appendChild(removeBtn);
-
-        return previewItem;
-    }
 
     function updateFileInput() {
         const dataTransfer = new DataTransfer();
@@ -524,7 +398,10 @@
         validFiles.forEach(file => {
             if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
                 selectedFiles.push(file);
-                const preview = createFilePreview(file);
+                const preview = window.FilePreviewHelper.createFilePreview(file, (removedFile) => {
+                    selectedFiles = selectedFiles.filter(f => f.name !== removedFile.name || f.size !== removedFile.size);
+                    updateFileInput();
+                });
                 previewContainer.appendChild(preview);
             }
         });
@@ -555,20 +432,20 @@
 
     dropArea.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-    // Обработчики закрытия модального окна
+    }
+        // Обработчики закрытия модального окна
     document.addEventListener('DOMContentLoaded', () => {
         const modal = document.getElementById('imageModal');
         if (modal) {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal || e.target.classList.contains('image-modal-overlay') || e.target.classList.contains('image-modal-close')) {
-                    closeImageModal();
+                    window.FilePreviewHelper.closeImageModal();
                 }
             });
 
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && modal.style.display === 'flex') {
-                    closeImageModal();
+                    window.FilePreviewHelper.closeImageModal();
                 }
             });
         }
