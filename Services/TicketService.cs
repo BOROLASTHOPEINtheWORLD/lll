@@ -28,7 +28,6 @@ namespace labsupport.Services
         Task AttachFileToCommentAsync(long commentId, string filePath, string fileName);
         Task<(string fileName, string filePath)> SaveAttachmentAsync(IFormFile file);
         Task<List<MessageAttachment>> GetCommentAttachmentsAsync(long commentId);
-        Task AttachFileToCommentAsync(long commentId, string filePath, string fileName);
         Task<List<TicketStatus>> GetAllStatusesAsync();
     }
 
@@ -541,25 +540,7 @@ namespace labsupport.Services
             var relativePath = $"/uploads/{fileName}";
             return (file.FileName, relativePath);
         }
-        public async Task AttachFileToCommentAsync(long commentId, string filePath, string fileName)
-        {
-            var comment = await _context.TicketComments
-                .Include(c => c.Ticket)
-                .FirstOrDefaultAsync(c => c.Id == commentId);
-
-            if (comment == null) return;
-
-            var attachment = new MessageAttachment
-            {
-                CommentId = commentId,
-                FileName = fileName,
-                FilePath = filePath,
-                UploadedAt = DateTime.Now
-            };
-
-            _context.MessageAttachments.Add(attachment);
-            await _context.SaveChangesAsync();
-        }
+       
         public async Task<List<MessageAttachment>> GetCommentAttachmentsAsync(long commentId)
         {
             return await _context.MessageAttachments

@@ -47,11 +47,11 @@ namespace labsupport
             builder.Services.AddScoped<ICategoriesService, CategoriesService>();
 
             builder.Services.AddSignalR()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-                    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-                });
+              .AddJsonProtocol(options =>
+              {
+                  options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                  options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
+              });
 
             var app = builder.Build();
 
