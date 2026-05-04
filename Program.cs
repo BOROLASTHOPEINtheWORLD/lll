@@ -2,6 +2,8 @@
 using labsupport.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace labsupport
 {
@@ -44,7 +46,12 @@ namespace labsupport
             builder.Services.AddScoped<PositionService>();
             builder.Services.AddScoped<ICategoriesService, CategoriesService>();
 
-            builder.Services.AddSignalR();
+            builder.Services.AddSignalR()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                });
 
             var app = builder.Build();
 

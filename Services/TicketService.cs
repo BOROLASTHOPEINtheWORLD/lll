@@ -25,6 +25,7 @@ namespace labsupport.Services
         Task<TicketComment?> EditCommentAsync(long commentId, int userId, string newContent);
         Task<bool> DeleteCommentAsync(long commentId, int userId);
         Task SaveMessageAttachmentsAsync(long commentId, IFormFile[] attachments);
+        Task AttachFileToCommentAsync(long commentId, string filePath, string fileName);
         Task<(string fileName, string filePath)> SaveAttachmentAsync(IFormFile file);
         Task<List<MessageAttachment>> GetCommentAttachmentsAsync(long commentId);
         Task<List<TicketStatus>> GetAllStatusesAsync();
@@ -383,6 +384,26 @@ namespace labsupport.Services
                 _context.MessageAttachments.Add(attachment);
             }
 
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task AttachFileToCommentAsync(long commentId, string filePath, string fileName)
+        {
+            var comment = await _context.TicketComments
+                .Include(c => c.Ticket)
+                .FirstOrDefaultAsync(c => c.Id == commentId);
+
+            if (comment == null) return;
+
+            var attachment = new MessageAttachment
+            {
+                CommentId = commentId,
+                FileName = fileName,
+                FilePath = filePath,
+                UploadedAt = DateTime.Now
+            };
+
+            _context.MessageAttachments.Add(attachment);
             await _context.SaveChangesAsync();
         }
 

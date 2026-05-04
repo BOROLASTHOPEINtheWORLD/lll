@@ -2,6 +2,7 @@
 using labsupport.Models;
 using labsupport.Services;
 using Microsoft.EntityFrameworkCore;
+using labsupport.Hubs;
 
 namespace labsupport.Hubs
 {
@@ -36,7 +37,7 @@ namespace labsupport.Hubs
         }
 
         // Отправка комментария
-        public async Task SendMessage(long ticketId, string content, bool isInternal, List<IFormFile>? attachments)
+        public async Task SendMessage(long ticketId, string content, bool isInternal, List<AttachmentDto>? attachments)
         {
             try
             {
@@ -49,6 +50,15 @@ namespace labsupport.Hubs
 
                 // Сохраняем комментарий через сервис
                 var comment = await _ticketService.AddCommentAsync(ticketId, userId, content, isInternal, null);
+
+                // Если есть вложения, привязываем их к комментарию
+                if (attachments != null && attachments.Count > 0)
+                {
+                    foreach (var attachment in attachments)
+                    {
+                        await _ticketService.AttachFileToCommentAsync(comment.Id, attachment.FilePath, attachment.FileName);
+                    }
+                }
 
                 // Загружаем полные данные комментария
                 var fullComment = await _ticketService.GetCommentWithDetailsAsync(comment.Id);
