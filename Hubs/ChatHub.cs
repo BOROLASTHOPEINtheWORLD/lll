@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using labsupport.Models;
+﻿using labsupport.Models;
 using labsupport.Services;
+using labsupport.ViewModels;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using labsupport.Hubs;
 
