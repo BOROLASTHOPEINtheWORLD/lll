@@ -131,7 +131,7 @@
                                 <td style="padding: 12px 16px;">
                                     @if (ticket.DueDate.HasValue)
                                     {
-                                        <span style="@(isOverdue ? "color: #ef4444; font-weight: 600;" : "")">
+                                        <span style="@(isOverdue ? "color: #ef4444; font-weight: 600;" : "")" data-time="@ticket.DueDate.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")">
                                             @ticket.DueDate.Value.ToString("dd.MM.yyyy HH:mm")
                                         </span>
                                     }

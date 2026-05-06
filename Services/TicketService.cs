@@ -309,11 +309,12 @@ namespace labsupport.Services
                 UserId = userId,
                 Content = content,
                 IsInternal = isInternal,
-                CreatedAt = DateTime.Now
-            }; ;
+                CreatedAt = DateTime.Now,
+                EditedAt = null  
+            };
 
             _context.TicketComments.Add(comment);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // ← ТУТ ВСЁ НОРМ
 
             // Обновляем UpdatedAt у заявки
             var ticket = await _context.Tickets.FindAsync(ticketId);
@@ -326,7 +327,16 @@ namespace labsupport.Services
             // Сохраняем вложения если есть
             if (attachments != null && attachments.Length > 0)
             {
-                await SaveMessageAttachmentsAsync(comment.Id, attachments);
+                try
+                {
+                    await SaveMessageAttachmentsAsync(comment.Id, attachments);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Ошибка при сохранении вложений для комментария {CommentId}", comment.Id);
+                    // НЕ ПРОГЛАТЫВАЙ ОШИБКУ - ПРОБРОСЬ ДАЛЬШЕ
+                    throw;
+                }
             }
 
             // Добавляем запись в историю
@@ -351,26 +361,47 @@ namespace labsupport.Services
                 .Include(c => c.Ticket)
                 .FirstOrDefaultAsync(c => c.Id == commentId);
 
-            if (comment == null) return;
+            if (comment == null)
+            {
+                _logger.LogError("Комментарий с Id={CommentId} не найден при сохранении вложений", commentId);
+                throw new InvalidOperationException($"Комментарий с Id={commentId} не найден");
+            }
+
 
             var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tickets", comment.TicketId.ToString(), "comments");
 
             if (!Directory.Exists(uploadsFolder))
             {
-                Directory.CreateDirectory(uploadsFolder);
+                try
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    _logger.LogError(ex, "Нет прав на создание папки {FolderPath}", uploadsFolder);
+                    throw;
+                }
             }
 
             foreach (var file in attachments)
             {
                 if (file.Length == 0) continue;
 
-                var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+                var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
                 var filePath = Path.Combine(uploadsFolder, uniqueFileName);
                 var relativePath = $"/uploads/tickets/{comment.TicketId}/comments/{uniqueFileName}";
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                try
                 {
-                    await file.CopyToAsync(stream);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Ошибка при сохранении файла {FilePath}", filePath);
+                    throw;
                 }
 
                 var attachment = new MessageAttachment
