@@ -22,13 +22,14 @@ namespace labsupport.Services
         Task UpdateTicketStatusAsync(long ticketId, short statusId, int userId);
         Task UpdateTicketAssignmentAsync(long ticketId, int assignedToId, int userId);
         Task<TicketComment> GetCommentWithDetailsAsync(long commentId);
-        Task<TicketComment?> EditCommentAsync(long commentId, int userId, string newContent);
+        Task<TicketComment?> EditCommentAsync(long commentId, int userId, string newContent, List<string>? existingAttachments = null, List<string>? removedAttachments = null);
         Task<bool> DeleteCommentAsync(long commentId, int userId);
         Task SaveMessageAttachmentsAsync(long commentId, IFormFile[] attachments);
         Task AttachFileToCommentAsync(long commentId, string filePath, string fileName);
         Task<(string fileName, string filePath)> SaveAttachmentAsync(IFormFile file);
         Task<List<MessageAttachment>> GetCommentAttachmentsAsync(long commentId);
         Task<List<TicketStatus>> GetAllStatusesAsync();
+        Task ClearCommentAttachmentsAsync(long commentId);
     }
 
     public class TicketService : ITicketService
@@ -495,17 +496,16 @@ namespace labsupport.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<TicketComment> GetCommentWithDetailsAsync(long commentId)
+        public async Task<TicketComment?> GetCommentWithDetailsAsync(long commentId)
         {
             return await _context.TicketComments
                 .Include(c => c.User)
                     .ThenInclude(u => u.Department)
                 .Include(c => c.MessageAttachments)
-                .FirstOrDefaultAsync(c => c.Id == commentId)
-                    ?? throw new Exception("Комментарий не найден");
+                .FirstOrDefaultAsync(c => c.Id == commentId);
         }
 
-        public async Task<TicketComment?> EditCommentAsync(long commentId, int userId, string newContent)
+        public async Task<TicketComment?> EditCommentAsync(long commentId, int userId, string newContent, List<string>? existingAttachments = null, List<string>? removedAttachments = null)
         {
             var comment = await _context.TicketComments.FindAsync(commentId);
             if (comment == null || comment.UserId != userId)
@@ -516,7 +516,48 @@ namespace labsupport.Services
 
             await _context.SaveChangesAsync();
 
-            // Возвращаем обновленный комментарий с деталями
+            // Обработка вложений
+            if (removedAttachments != null && removedAttachments.Count > 0)
+            {
+                foreach (var path in removedAttachments)
+                {
+                    var attachment = await _context.MessageAttachments.FirstOrDefaultAsync(a => a.FilePath == path && a.CommentId == commentId);
+                    if (attachment != null)
+                    {
+                        // Удаляем файл с диска
+                        var fullPath = Path.Combine(_webHostEnvironment.WebRootPath, attachment.FilePath.TrimStart('/'));
+                        if (File.Exists(fullPath))
+                        {
+                            File.Delete(fullPath);
+                        }
+
+                        _context.MessageAttachments.Remove(attachment);
+                    }
+                }
+            }
+
+            if (existingAttachments != null && existingAttachments.Count > 0)
+            {
+                foreach (var path in existingAttachments)
+                {
+                    var fileName = Path.GetFileName(path);
+                    var existing = await _context.MessageAttachments.FirstOrDefaultAsync(a => a.FilePath == path && a.CommentId == commentId);
+                    if (existing == null)
+                    {
+                        var newAtt = new MessageAttachment
+                        {
+                            CommentId = commentId,
+                            FileName = fileName,
+                            FilePath = path,
+                            UploadedAt = DateTime.Now
+                        };
+                        _context.MessageAttachments.Add(newAtt);
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
             return await GetCommentWithDetailsAsync(commentId);
         }
 
@@ -584,6 +625,29 @@ namespace labsupport.Services
             return await _context.TicketStatuses
                 .OrderBy(s => s.Id)
                 .ToListAsync();
+        }
+        public async Task ClearCommentAttachmentsAsync(long commentId)
+        {
+            var attachments = await _context.MessageAttachments.Where(a => a.CommentId == commentId).ToListAsync();
+
+            foreach (var att in attachments)
+            {
+                try
+                {
+                    var filePath = Path.Combine(_webHostEnvironment.WebRootPath, att.FilePath.TrimStart('/'));
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Не удалось удалить файл {FilePath}", att.FilePath);
+                }
+            }
+
+            _context.MessageAttachments.RemoveRange(attachments);
+            await _context.SaveChangesAsync();
         }
     }
 

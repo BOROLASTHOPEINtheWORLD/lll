@@ -10,7 +10,7 @@ public partial class TicketComment
 
     public int UserId { get; set; }
 
-    public string Content { get; set; } = null!;
+    public string? Content { get; set; } = null!;
 
     public bool? IsInternal { get; set; }
 

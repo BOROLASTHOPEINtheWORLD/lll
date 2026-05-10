@@ -54,15 +54,25 @@ namespace labsupport.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddComment(long ticketId, string content, bool isInternal, IFormFile[]? attachments)
+        public async Task<IActionResult> AddComment(long ticketId, string content, bool isInternal, IFormFile[]? attachments, string[]? existingAttachments)
         {
             var userId = GetCurrentUserId();
-            if (string.IsNullOrWhiteSpace(content) && (attachments == null || attachments.Length == 0))
+            if (string.IsNullOrWhiteSpace(content) && (attachments == null || attachments.Length == 0) && (existingAttachments == null || existingAttachments.Length == 0))
                 return BadRequest(new { error = "..." });
 
             try
             {
                 var comment = await _ticketService.AddCommentAsync(ticketId, userId, content, isInternal, attachments);
+
+                // Если есть existingAttachments — прикрепляем их к комментарию
+                if (existingAttachments != null)
+                {
+                    foreach (var path in existingAttachments)
+                    {
+                        var fileName = Path.GetFileName(path);
+                        await _ticketService.AttachFileToCommentAsync(comment.Id, path, fileName);
+                    }
+                }
 
                 // +++ НОВОЕ: Получаем данные комментария для отправки в SignalR
                 var commentDetails = await _ticketService.GetCommentWithDetailsAsync(comment.Id);
@@ -71,7 +81,7 @@ namespace labsupport.Controllers
                     id = commentDetails.Id,
                     content = commentDetails.Content,
                     isInternal = commentDetails.IsInternal ?? false,
-                    createdAt = commentDetails.CreatedAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"), // ISO формат!
+                    createdAt = commentDetails.CreatedAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
                     authorName = $"{commentDetails.User.LastName} {commentDetails.User.FirstName}",
                     authorAvatar = commentDetails.User.AvatarPath,
                     userId = commentDetails.UserId,
@@ -79,7 +89,6 @@ namespace labsupport.Controllers
                     attachments = commentDetails.MessageAttachments.Select(a => new { a.FileName, a.FilePath }).ToList()
                 };
 
-                // +++ Отправляем в SignalR
                 var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
                 await hubContext.Clients.Group($"ticket-{ticketId}").SendAsync("ReceiveMessage", messageDto);
 
@@ -93,7 +102,7 @@ namespace labsupport.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditComment(long commentId, string content)
+        public async Task<IActionResult> EditComment(long commentId, string content, IFormFile[]? attachments, string[]? existingAttachments, string[]? removedAttachments)
         {
             var userId = GetCurrentUserId();
 
@@ -104,23 +113,35 @@ namespace labsupport.Controllers
 
             try
             {
-                var updatedComment = await _ticketService.EditCommentAsync(commentId, userId, content);
+                var updatedComment = await _ticketService.EditCommentAsync(commentId, userId, content, existingAttachments?.ToList(), removedAttachments?.ToList());
 
                 if (updatedComment == null)
                 {
                     return NotFound("Комментарий не найден или у вас нет прав на редактирование");
                 }
 
-                return Json(new
+                // Сохраняем новые файлы
+                if (attachments != null && attachments.Length > 0)
                 {
-                    success = true,
-                    comment = new
-                    {
-                        id = updatedComment.Id,
-                        content = updatedComment.Content,
-                        editedAt = updatedComment.EditedAt?.ToString("dd.MM.yyyy HH:mm")
-                    }
-                });
+                    await _ticketService.SaveMessageAttachmentsAsync(updatedComment.Id, attachments);
+                }
+
+                // +++ Отправим обновлённый коммент через SignalR
+                var commentDetails = await _ticketService.GetCommentWithDetailsAsync(updatedComment.Id);
+                var messageDto = new
+                {
+                    id = commentDetails.Id,
+                    content = commentDetails.Content,
+                    editedAt = commentDetails.EditedAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                    attachments = commentDetails.MessageAttachments.Select(a => new { a.FileName, a.FilePath }).ToList()
+                };
+
+                var ticketId = commentDetails.TicketId;
+
+                var hubContext = HttpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+                await hubContext.Clients.Group($"ticket-{ticketId}").SendAsync("ReceiveMessageEdited", messageDto);
+
+                return Json(new { success = true, comment = messageDto });
             }
             catch (Exception ex)
             {
@@ -215,6 +236,34 @@ namespace labsupport.Controllers
                     a.FilePath
                 }).ToList()
             }));
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetCommentById(long commentId)
+        {
+            var userId = GetCurrentUserId();
+
+            // Получаем комментарий с вложениями
+            var comment = await _ticketService.GetCommentWithDetailsAsync(commentId);
+
+            if (comment == null || comment.UserId != userId)
+            {
+                return NotFound("Комментарий не найден или недостаточно прав");
+            }
+
+            var result = new
+            {
+                comment.Id,
+                comment.Content,
+                comment.IsInternal,
+                CreatedAt = comment.CreatedAt?.ToString("O"),
+                AuthorName = $"{comment.User.LastName} {comment.User.FirstName}",
+                AuthorAvatar = comment.User.AvatarPath,
+                UserId = comment.UserId,
+                EditedAt = comment.EditedAt?.ToString("O"),
+                Attachments = comment.MessageAttachments.Select(a => new { a.FileName, a.FilePath }).ToList()
+            };
+
+            return Json(result);
         }
         [HttpGet]
         public async Task<IActionResult> GetStatuses()
