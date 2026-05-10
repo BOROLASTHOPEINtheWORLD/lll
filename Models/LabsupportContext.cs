@@ -40,6 +40,7 @@ public partial class LabsupportContext : DbContext
     public virtual DbSet<TicketHistory> TicketHistories { get; set; }
 
     public virtual DbSet<TicketStatus> TicketStatuses { get; set; }
+    public virtual DbSet<TicketPriorityChange> TicketPriorityChanges { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -467,6 +468,44 @@ public partial class LabsupportContext : DbContext
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("users_role_id_fkey");
+        });
+
+        modelBuilder.Entity<TicketPriorityChange>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("ticket_priority_changes_pkey");
+
+            entity.ToTable("ticket_priority_changes");
+
+            entity.HasIndex(e => e.TicketId, "idx_priority_changes_ticket");
+            entity.HasIndex(e => e.ChangedById, "idx_priority_changes_changed_by");
+            entity.HasIndex(e => e.CreatedAt, "idx_priority_changes_created_at");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.TicketId).HasColumnName("ticket_id");
+            entity.Property(e => e.ChangedById).HasColumnName("changed_by_id");
+            entity.Property(e => e.OldPriority).HasColumnName("old_priority");
+            entity.Property(e => e.NewPriority).HasColumnName("new_priority");
+            entity.Property(e => e.Reason).HasColumnName("reason");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            // Проверочные约束 (CHECK)
+            entity.HasCheckConstraint("ticket_priority_changes_old_priority_check", "old_priority BETWEEN 1 AND 5");
+            entity.HasCheckConstraint("ticket_priority_changes_new_priority_check", "new_priority BETWEEN 1 AND 5");
+
+            // Связи
+            entity.HasOne(d => d.Ticket)
+                .WithMany(p => p.TicketPriorityChanges)
+                .HasForeignKey(d => d.TicketId)
+                .HasConstraintName("ticket_priority_changes_ticket_id_fkey");
+
+            entity.HasOne(d => d.ChangedBy)
+                .WithMany(p => p.TicketPriorityChanges)
+                .HasForeignKey(d => d.ChangedById)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("ticket_priority_changes_changed_by_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

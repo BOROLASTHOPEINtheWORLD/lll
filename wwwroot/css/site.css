@@ -2829,7 +2829,7 @@ textarea.form-control {
     border-radius: 4px;
     margin-top: 8px;
     font-size: 14px;
-    border-left: 3px solid #f55;
+    border-bottom: 3px solid #f55;
     animation: fadeIn 0.3s ease;
 }
 
@@ -2848,4 +2848,3 @@ textarea.form-control {
 .image-preview img {
     cursor: pointer;
 }
-

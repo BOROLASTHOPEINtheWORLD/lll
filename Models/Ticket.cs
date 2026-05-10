@@ -51,4 +51,5 @@ public partial class Ticket
     public virtual ICollection<TicketDelegation> TicketDelegations { get; set; } = new List<TicketDelegation>();
 
     public virtual ICollection<TicketHistory> TicketHistories { get; set; } = new List<TicketHistory>();
+    public virtual ICollection<TicketPriorityChange> TicketPriorityChanges { get; set; } = new List<TicketPriorityChange>();
 }
