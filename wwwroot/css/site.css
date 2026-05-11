@@ -2848,3 +2848,499 @@ textarea.form-control {
 .image-preview img {
     cursor: pointer;
 }
+/* === Новый дизайн страницы деталей заявки (v2) === */
+
+.ticket-details-page-v2 {
+    background: #f5f7fa;
+    padding: 24px;
+    overflow: hidden;
+}
+
+.ticket-details-layout-v2 {
+    display: grid;
+    grid-template-columns: 1fr 480px;
+    gap: 20px;
+    height: calc(100vh - 100px);
+    max-height: 100%;
+}
+
+.ticket-info-panel-v2 {
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.ticket-header-v2 {
+    background: white;
+    padding: 20px 24px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+}
+
+.ticket-header-top-v2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.ticket-header-v2 h1 {
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+}
+
+.ticket-number {
+    color: #8a8a9e;
+    font-size: 0.85rem;
+}
+
+.ticket-badges-v2 {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.status-badge-v2 {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-badge-v2.status-open {
+    background: #DBEAFE;
+    color: #1E40AF;
+}
+
+.status-badge-v2.status-progress {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.status-badge-v2.status-resolved {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.status-badge-v2.status-default {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+.priority-stars-v2 {
+    display: flex;
+    gap: 2px;
+}
+
+/* Компактные секции информации */
+.info-section-v2 {
+    background: white;
+    padding: 18px 20px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 14px;
+}
+
+.section-title-v2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-table-v2 {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.info-row-v2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+}
+
+.info-label-v2 {
+    font-size: 0.85rem;
+    color: #6B7280;
+    min-width: 100px;
+}
+
+.info-value-v2 {
+    font-size: 0.9rem;
+    color: #1f2937;
+    text-align: right;
+}
+
+.info-value-v2.overdue {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+/* Секция пользователей */
+.users-section-v2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.user-card-v2 {
+    background: white;
+    padding: 16px 18px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.user-card-title-v2 {
+    font-size: 0.85rem;
+    color: #6B7280;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.user-info-v2 {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.user-info-v2 strong {
+    display: block;
+    font-size: 0.9rem;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.user-info-v2 p {
+    font-size: 0.8rem;
+    color: #8a8a9e;
+    margin: 1px 0;
+}
+
+/* Описание */
+.ticket-description-v2 {
+    line-height: 1.6;
+    color: #374151;
+    white-space: pre-wrap;
+    font-size: 0.9rem;
+}
+
+/* Вложения - Grid с превью */
+.attachments-grid-v2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+/* История изменений */
+.history-timeline-v2 {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.history-item-v2 {
+    display: flex;
+    gap: 10px;
+    padding-left: 10px;
+    border-left: 2px solid #e5e7eb;
+}
+
+.history-time-v2 {
+    font-size: 0.75rem;
+    color: #8a8a9e;
+    min-width: 110px;
+}
+
+.history-content-v2 {
+    font-size: 0.85rem;
+    color: #374151;
+}
+
+.btn-show-more-v2 {
+    background: #f3f4f6;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #6B7280;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.btn-show-more-v2:hover {
+    background: #e5e7eb;
+}
+
+/* Действия */
+.actions-section-v2 {
+    background: white;
+    padding: 18px 20px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 14px;
+}
+
+.action-form-v2 {
+    margin-bottom: 14px;
+}
+
+.action-form-v2:last-child {
+    margin-bottom: 0;
+}
+
+.action-label-v2 {
+    display: block;
+    font-size: 0.8rem;
+    color: #6B7280;
+    margin-bottom: 6px;
+}
+
+.form-control-v2 {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: white;
+    transition: border-color 0.2s;
+}
+
+.form-control-v2:focus {
+    outline: none;
+    border-color: #dc2626;
+}
+
+/* Чат v2 */
+.chat-panel-v2 {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+}
+
+.chat-header-v2 {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.chat-header-v2 h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #1f2937;
+}
+
+.chat-messages-v2 {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.no-messages-v2 {
+    text-align: center;
+    padding: 40px 20px;
+    color: #8a8a9e;
+}
+
+.message-v2 {
+    display: flex;
+    gap: 10px;
+}
+
+.message-own-v2 {
+    flex-direction: row-reverse;
+}
+
+.message-avatar-v2 img,
+.avatar-placeholder-v2 {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-placeholder-v2 {
+    background: #e5e7eb;
+    color: #6B7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.message-content-v2 {
+    max-width: 80%;
+    background: #f3f4f6;
+    padding: 10px 14px;
+    border-radius: 12px;
+}
+
+.message-own-v2 .message-content-v2 {
+    background: #fee2e2;
+    color: #1f2937;
+}
+
+.message-internal-v2 .message-content-v2 {
+    background: #FFF3E0;
+    border: 1px solid #FFE0B2;
+}
+
+.message-header-v2 {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+}
+
+.message-author-v2 {
+    font-weight: 600;
+    color: #374151;
+}
+
+.message-own-v2 .message-author-v2 {
+    color: #1f2937;
+}
+
+.message-time-v2 {
+    color: #8a8a9e;
+    font-size: 0.7rem;
+}
+
+.badge-internal-v2 {
+    background: #F57C00;
+    color: white;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+}
+
+.message-text-v2 {
+    line-height: 1.5;
+    word-break: break-word;
+    font-size: 0.9rem;
+}
+
+.message-attachments-v2 {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.message-edited-v2 {
+    font-size: 0.7rem;
+    color: #8a8a9e;
+    margin-top: 6px;
+    font-style: italic;
+}
+
+.chat-input-area-v2 {
+    padding: 14px 18px;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+}
+
+.comment-options-v2 {
+    margin-bottom: 10px;
+}
+
+.checkbox-label-v2 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: #6B7280;
+}
+
+.input-wrapper-v2 {
+    position: relative;
+}
+
+.comment-textarea-v2 {
+    width: 100%;
+    padding: 10px;
+    padding-right: 110px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    resize: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.comment-textarea-v2:focus {
+    outline: none;
+    border-color: #dc2626;
+}
+
+.input-actions-v2 {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    display: flex;
+    gap: 6px;
+}
+
+.btn-attach-v2,
+.btn-send-v2 {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.btn-attach-v2 {
+    background: #f3f4f6;
+    color: #6B7280;
+}
+
+.btn-attach-v2:hover {
+    background: #e5e7eb;
+}
+
+.btn-send-v2 {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-send-v2:hover {
+    background: #b91c1c;
+}
+
+.file-preview-container-v2 {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .ticket-details-layout-v2 {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    
+    .chat-panel-v2 {
+        min-height: 500px;
+    }
+}

@@ -11,7 +11,7 @@
 <div class="app-container">
     @await Html.PartialAsync("_Sidebar")
 
-    <main class="main-content ticket-details-page">
+    <main class="main-content ticket-details-page-v2">
         @if (TempData["Success"] != null)
         {
             <div class="alert alert-success">@TempData["Success"]</div>
@@ -21,24 +21,24 @@
             <div class="alert alert-error">@TempData["Error"]</div>
         }
 
-        <div class="ticket-details-layout">
+        <div class="ticket-details-layout-v2">
             <!-- Левая часть - Информация о заявке -->
-            <div class="ticket-info-panel">
-                <div class="ticket-header">
-                    <div class="ticket-header-top">
+            <div class="ticket-info-panel-v2">
+                <div class="ticket-header-v2">
+                    <div class="ticket-header-top-v2">
                         <div>
                             <h1>@Model.Ticket.Title</h1>
-                            <p class="ticket-number">Заявка #@Model.Ticket.TicketNumber</p>
+                            <p class="ticket-number-v2">Заявка #@Model.Ticket.TicketNumber</p>
                         </div>
-                        <div class="ticket-actions">
+                        <div class="ticket-actions-v2">
                             <a href="@Url.Action("Index", "Ticket")" class="btn btn-secondary">
                                 ← Назад к списку
                             </a>
                         </div>
                     </div>
 
-                    <div class="ticket-badges">
-                        <span class="status-badge @(Model.Ticket.Status.Name switch {
+                    <div class="ticket-badges-v2">
+                        <span class="status-badge-v2 @(Model.Ticket.Status.Name switch {
                             "Новая" => "status-open",
                             "В работе" => "status-progress",
                             "На проверке" => "status-progress",
@@ -49,7 +49,7 @@
                             @Model.Ticket.Status.Name
                         </span>
 
-                        <div class="priority-stars">
+                        <div class="priority-stars-v2">
                             @for (int i = 1; i <= 5; i++)
                             {
                                 <span style="color: @(i <= Model.Ticket.Priority ? "#F59E0B" : "#D1D5DB");">
@@ -61,22 +61,22 @@
                 </div>
 
                 <!-- Основная информация -->
-                <div class="info-card">
+                <div class="info-section-v2">
                     <h3>📋 Основная информация</h3>
-                    <div class="info-grid">
-                        <div class="info-item">
+                    <div class="info-grid-v2">
+                        <div class="info-row-v2">
                             <label>Категория:</label>
                             <span>@(Model.Ticket.Category?.Name ?? "Не указана")</span>
                         </div>
-                        <div class="info-item">
+                        <div class="info-row-v2">
                             <label>Создана:</label>
                             <span class="local-time" data-time="@Model.Ticket.CreatedAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")">@Model.Ticket.CreatedAt?.ToString("dd.MM.yyyy HH:mm")</span>
                         </div>
-                        <div class="info-item">
+                        <div class="info-row-v2">
                             <label>Обновлена:</label>
                          <span>@Model.Ticket.UpdatedAt?.ToString("dd.MM.yyyy HH:mm")</span>
                         </div>
-                        <div class="info-item">
+                        <div class="info-row-v2">
                             <label>Срок исполнения:</label>
                             <span class="@(Model.Ticket.DueDate.HasValue && Model.Ticket.DueDate < DateTime.Now ? "overdue" : "")">
                                 @(Model.Ticket.DueDate?.ToString("dd.MM.yyyy HH:mm") ?? "Не установлен")
@@ -86,18 +86,18 @@
                 </div>
 
                 <!-- Описание -->
-                <div class="info-card">
+                <div class="info-section-v2">
                     <h3>📝 Описание</h3>
-                    <div class="ticket-description">
+                    <div class="ticket-description-v2">
                         @(Model.Ticket.Description ?? "Описание отсутствует")
                     </div>
                 </div>
 
                 <!-- Автор и исполнитель -->
-                <div class="info-grid-2">
-                    <div class="info-card">
+                <div class="users-grid-v2">
+                    <div class="info-section-v2">
                         <h3>👤 Автор заявки</h3>
-                        <div class="user-info">
+                        <div class="user-info-v2">
                             @{
                                 ViewBag.AvatarSize = "small";
                             }
@@ -111,9 +111,9 @@
                         </div>
                     </div>
 
-                    <div class="info-card">
+                    <div class="info-section-v2">
                         <h3>🔧 Исполнитель</h3>
-                        <div class="user-info">
+                        <div class="user-info-v2">
                                  @{
                                 ViewBag.AvatarSize = "small";
                             }
@@ -130,9 +130,9 @@
                 <!-- Вложения заявки -->
                 @if (Model.Ticket.TicketAttachments.Any())
                 {
-                    <div class="info-card">
+                    <div class="info-section-v2">
                         <h3>📎 Вложения (@Model.Ticket.TicketAttachments.Count)</h3>
-                        <div class="attachments-list">
+                        <div class="attachments-grid-v2">
                             @foreach (var attachment in Model.Ticket.TicketAttachments)
                             {
                                 <a href="@attachment.FilePath" class="attachment-item" download>
@@ -147,14 +147,14 @@
                 <!-- История изменений -->
                 @if (Model.History.Any())
                 {
-                    <div class="info-card">
+                    <div class="info-section-v2">
                         <h3>📜 История изменений</h3>
-                        <div class="history-timeline">
+                        <div class="history-container-v2">
                             @foreach (var item in Model.History.OrderByDescending(h => h.ChangedAt).Take(20))
                             {
-                                <div class="history-item">
+                                <div class="history-item-v2">
                                     <div class="history-time local-time" data-time="@item.ChangedAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")">@item.ChangedAt?.ToString("dd.MM.yyyy HH:mm")</div>
-                                    <div class="history-content">
+                                    <div class="history-content-v2">
                                         <strong>@item.User.LastName @item.User.FirstName</strong>
                                         <span>изменил "@item.FieldName"</span>
                                         @if (!string.IsNullOrEmpty(item.NewValue))
@@ -171,13 +171,13 @@
                 <!-- Панель действий для инженеров/админов -->
                 @if (isEngineerOrAdmin)
                 {
-                    <div class="info-card actions-card">
+                    <div class="info-card actions-section-v2">
                         <h3>⚙️ Действия</h3>
 
-                        <form asp-action="UpdateStatus" method="post" class="action-form">
+                        <form asp-action="UpdateStatus" method="post" class="action-form-v2">
                             <label>Изменить статус:</label>
                             <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
-                            <select name="statusId" onchange="this.form.submit()" class="form-control">
+                            <select name="statusId" onchange="this.form.submit()" class="form-control-v2">
                                 <option value="1" selected="@(Model.Ticket.StatusId == 1)">Новая</option>
                                 <option value="2" selected="@(Model.Ticket.StatusId == 2)">В работе</option>
                                 <option value="3" selected="@(Model.Ticket.StatusId == 3)">На проверке</option>
@@ -186,10 +186,10 @@
                             </select>
                         </form>
 
-                        <form asp-action="UpdateAssignment" method="post" class="action-form">
+                        <form asp-action="UpdateAssignment" method="post" class="action-form-v2">
                             <label>Назначить исполнителя:</label>
                             <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
-                            <select name="assignedToId" onchange="this.form.submit()" class="form-control">
+                            <select name="assignedToId" onchange="this.form.submit()" class="form-control-v2">
                                 @foreach (var assignee in Model.AvailableAssignees)
                                 {
                                     <option value="@assignee.Id" selected="@(assignee.Id == Model.Ticket.AssignedToId)">
@@ -203,15 +203,15 @@
             </div>
 
             <!-- Правая часть - Чат -->
-            <div class="chat-panel">
-                <div class="chat-header">
+            <div class="chat-panel-v2">
+                <div class="chat-header-v2">
                     <h3>Чат</h3>
                 </div>
 
-                <div class="chat-messages" id="chat-messages">
+                <div class="chat-messages-v2" id="chat-messages-v2">
                     @if (!Model.Comments.Any())
                     {
-                        <div class="no-messages">
+                        <div class="no-messages-v2">
                             <p>Сообщений пока нет</p>
                             <span>Будьте первым, кто напишет комментарий</span>
                         </div>
@@ -223,33 +223,33 @@
                     bool isOwnComment = comment.UserId == Model.CurrentUser.Id;
                     bool isInternal = comment.IsInternal ?? false;
 
-                    <div class="message @(isOwnComment ? "message-own" : "") @(isInternal ? "message-internal" : "")" data-comment-id="@comment.Id">
-                        <div class="message-avatar">
+                    <div class="message-v2 @(isOwnComment ? "message-own-v2" : "") @(isInternal ? "message-internal-v2" : "")" data-comment-id="@comment.Id">
+                        <div class="message-avatar-v2">
                             @if (!string.IsNullOrEmpty(comment.User.AvatarPath))
                             {
                                 <img src="@comment.User.AvatarPath" alt="Avatar" />
                             }
                             else
                             {
-                                <div class="avatar-placeholder">
+                                <div class="avatar-placeholder-v2">
                                     @((comment.User.FirstName?.FirstOrDefault().ToString() ?? "?") + (comment.User.LastName?.FirstOrDefault().ToString() ?? ""))
                                 </div>
                             }
                         </div>
-                        <div class="message-content">
-                            <div class="message-header">
-                                <span class="message-author">@comment.User.LastName @comment.User.FirstName</span>
+                        <div class="message-content-v2">
+                            <div class="message-header-v2">
+                                <span class="message-author-v2">@comment.User.LastName @comment.User.FirstName</span>
                                <span class="message-time local-time" data-time="@comment.CreatedAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")">@comment.CreatedAt?.ToString("dd.MM.yyyy HH:mm")</span>
                                 @if (isInternal)
                                 {
-                                    <span class="badge-internal">Внутренний</span>
+                                    <span class="badge-internal-v2">Внутренний</span>
                                 }
                             </div>
-                            <div class="message-text">@comment.Content</div>
+                            <div class="message-text-v2">@comment.Content</div>
 
                             @if (comment.MessageAttachments.Any())
                             {
-                                <div class="message-attachments">
+                                <div class="message-attachments-v2">
                                 @foreach (var attachment in comment.MessageAttachments)
                                 {
                                     // Извлекаем расширение вручную (без Path)
@@ -302,7 +302,7 @@
 
                             @if (comment.EditedAt.HasValue)
                             {
-                                <div class="message-edited">
+                                <div class="message-edited-v2">
                                    Отредактировано <span class="local-time" data-time="@comment.EditedAt.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")">@comment.EditedAt.Value.ToString("dd.MM.yyyy HH:mm")</span>
                                 </div>
                             }
@@ -313,36 +313,36 @@
                 </div>
 
                 <!-- Форма отправки комментария -->
-                <div class="chat-input-area">
+                <div class="chat-input-area-v2">
                     <form id="comment-form">
                         <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
 
-                        <div class="comment-options">
+                        <div class="comment-options-v2">
                             @if (isEngineerOrAdmin)
                             {
-                                <label class="checkbox-label">
+                                <label class="checkbox-label-v2">
                                     <input type="checkbox" name="isInternal" id="isInternal" />
                                     <span>Внутренний комментарий (не видно пользователю)</span>
                                 </label>
                             }
                         </div>
 
-                        <div class="input-wrapper">
+                        <div class="input-wrapper-v2">
                             <textarea
                                 name="content"
                                 id="comment-content"
                                 placeholder="Введите комментарий..."
                                 rows="3"
-                                class="comment-textarea"></textarea>
+                                class="comment-textarea-v2"></textarea>
 
-                            <div class="input-actions">
-                               <label for="comment-file-input" class="btn-attach" id="comment-attach-btn" title="Прикрепить файл">
+                            <div class="input-actions-v2">
+                               <label for="comment-file-input" class="btn-attach-v2" id="comment-attach-btn" title="Прикрепить файл">
                                     <svg viewBox="0 0 24 24" width="20" height="20">
                                         <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
                                     </svg>
                                 </label>
                                 <input type="file" id="comment-file-input" multiple style="display: none;" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" />
-                                <button type="submit" class="btn-send">
+                                <button type="submit" class="btn-send-v2">
                                     <svg viewBox="0 0 24 24" width="20" height="20">
                                         <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                                     </svg>
@@ -352,7 +352,7 @@
                         </div>
 
                         <!-- Превью выбранных файлов -->
-                        <div id="comment-file-preview" class="file-preview-container"></div>
+                        <div id="comment-file-preview" class="file-preview-container-v2"></div>
                     </form>
                 </div>
             </div>
@@ -433,7 +433,7 @@
 
     // Обработчик ПКМ на **всех сообщениях**, включая те, что уже есть
     document.getElementById('chat-messages').addEventListener('contextmenu', function (e) {
-        const messageEl = e.target.closest('.message');
+        const messageEl = e.target.closest('.message-v2');
         if (!messageEl) return;
 
         const commentId = parseInt(messageEl.dataset.commentId);
@@ -442,13 +442,13 @@
             return;
         }
 
-        const isOwn = messageEl.classList.contains('message-own');
+        const isOwn = messageEl.classList.contains('message-own-v2');
         if (!isOwn) return; // Только свои сообщения
 
         e.preventDefault();
 
         // Сохраняем данные для редактирования
-        const contentEl = messageEl.querySelector('.message-text');
+        const contentEl = messageEl.querySelector('.message-text-v2');
         currentCommentId = commentId;
         currentCommentContent = contentEl?.textContent || '';
 
