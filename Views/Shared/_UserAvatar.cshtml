@@ -11,21 +11,3 @@ else
     </div>
 }
 
-@* @model dynamic
-
-@if (Model != null && Model.User != null)
-{
-    var user = Model.User as labsupport.Models.User;
-    var size = Model.Size ?? "default";
-
-    if (!string.IsNullOrEmpty(user?.AvatarPath))
-    {
-        <img src="@user.AvatarPath" alt="Avatar" class="avatar-@size" />
-    }
-    else
-    {
-        <div class="avatar-@size-placeholder">
-            @((user?.FirstName?.FirstOrDefault().ToString() ?? "?") + (user?.LastName?.FirstOrDefault().ToString() ?? ""))
-        </div>
-    }
-} *@

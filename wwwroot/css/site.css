@@ -2260,6 +2260,7 @@ textarea.form-control {
     }
 }
 
+
 .ticket-details-page {
     background: var(--gray-light);
     padding: 24px;
@@ -2281,10 +2282,10 @@ textarea.form-control {
 
 .ticket-header {
     background: white;
-    padding: 24px;
+    padding: 20px;
     border-radius: 12px;
-    box-shadow: var(--shadow-sm);
-    margin-bottom: 24px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
 }
 
 .ticket-header-top {
@@ -2292,151 +2293,409 @@ textarea.form-control {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .ticket-header h1 {
     font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
     margin-bottom: 4px;
+    line-height: 1.3;
 }
 
 .ticket-number {
-    color: var(--text-secondary);
+    color: #6B7280;
     font-size: 0.9rem;
+    font-weight: 500;
 }
 
-.ticket-badges {
+.back-link {
+    color: #3B82F6;
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+    .back-link:hover {
+        background-color: #F3F4F6;
+    }
+
+.ticket-meta {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     align-items: center;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-new {
+    background-color: #E3F2FD;
+    color: #1976D2;
+}
+
+.status-progress {
+    background-color: #FFF8E1;
+    color: #F57C00;
+}
+
+.status-review {
+    background-color: #E8EAF6;
+    color: #5C6BC0;
+}
+
+.status-done {
+    background-color: #E8F5E9;
+    color: #388E3C;
+}
+
+.status-cancel {
+    background-color: #FFEBEE;
+    color: #D32F2F;
+}
+
+.status-icon {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.priority-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #6B7280;
 }
 
 .priority-stars {
     display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stars-container {
+    display: flex;
     gap: 2px;
 }
 
-.info-card {
+.star {
+    color: #D1D5DB;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+    .star.active {
+        color: #F59E0B;
+    }
+
+.priority-label-text {
+    font-size: 0.85rem;
+    color: #6B7280;
+}
+
+.due-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #6B7280;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background-color: #F9FAFB;
+}
+
+    .due-date.overdue {
+        color: #EF4444;
+        background-color: #FEE2E2;
+        font-weight: 500;
+    }
+
+.meta-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.ticket-section {
     background: white;
-    padding: 20px;
     border-radius: 12px;
     box-shadow: var(--shadow-sm);
+    padding: 16px;
     margin-bottom: 16px;
 }
 
-    .info-card h3 {
-        font-size: 1rem;
-        margin-bottom: 16px;
-        color: var(--text-dark);
-    }
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section-icon {
+    width: 20px;
+    height: 20px;
+    fill: var(--primary-red);
+}
 
 .info-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 16px;
 }
 
-.info-item label {
-    display: block;
-    font-size: 0.8rem;
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
     color: var(--text-secondary);
-    margin-bottom: 4px;
+    font-weight: 500;
 }
 
-.info-item span {
+.info-icon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.info-value {
     font-size: 0.95rem;
-}
-
-    .info-item span.overdue {
-        color: #ef4444;
-        font-weight: 600;
-    }
-
-.info-grid-2 {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    color: var(--text-dark);
+    line-height: 1.5;
 }
 
 .ticket-description {
     line-height: 1.6;
     color: var(--text-dark);
     white-space: pre-wrap;
+    font-size: 0.95rem;
 }
 
-.user-info {
+.participants-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.participant-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.participant-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    background: var(--gray-light);
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.participant-icon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.participant-content {
     display: flex;
     gap: 12px;
-    align-items: center;
+    padding: 12px;
 }
 
-    .user-info strong {
-        display: block;
-        margin-bottom: 4px;
-    }
-
-    .user-info p {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        margin: 2px 0;
-    }
-
-.attachments-list {
+.participant-info {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
+    flex: 1;
 }
 
-.attachment-item {
+.participant-name {
+    font-weight: 500;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+.participant-details {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.attachments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.attachment-card {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--gray-light);
+    gap: 12px;
+    padding: 12px;
     border-radius: 8px;
     text-decoration: none;
     color: var(--text-dark);
     transition: background 0.2s;
+    border: 1px solid var(--border-color);
+    background: var(--gray-light);
 }
 
-    .attachment-item:hover {
+    .attachment-card:hover {
         background: var(--primary-red-light);
+        text-decoration: none;
     }
 
-.history-timeline {
+.attachment-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.attachment-image {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+}
+
+.attachment-doc-icon {
+    width: 20px;
+    height: 20px;
+    fill: var(--text-secondary);
+}
+
+.attachment-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.attachment-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.attachment-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.history-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .history-item {
     display: flex;
     gap: 12px;
-    padding-left: 12px;
-    border-left: 2px solid var(--border-color);
 }
 
-.history-time {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    min-width: 120px;
+.history-avatar {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
 }
 
 .history-content {
-    font-size: 0.9rem;
+    flex: 1;
 }
 
-.actions-card .action-form {
-    margin-bottom: 16px;
+.history-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
 }
 
-.actions-card label {
-    display: block;
+.history-author {
+    font-weight: 500;
+    color: var(--text-dark);
+    font-size: 0.85rem;
+}
+
+.history-time {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.history-change {
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    line-height: 1.4;
+}
+
+.management-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.action-label {
     font-size: 0.85rem;
     color: var(--text-secondary);
-    margin-bottom: 8px;
+    font-weight: 500;
 }
 
-/* Чат */
+.status-select, .assignee-select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: white;
+    font-size: 0.9rem;
+    width: 100%;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%235A5A6E'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+    .status-select:focus, .assignee-select:focus {
+        outline: none;
+        border-color: var(--primary-red);
+        box-shadow: 0 0 0 3px var(--primary-red-light);
+    }
+
+/* Стили для чата */
 .chat-panel {
     background: white;
     border-radius: 12px;
@@ -2445,24 +2704,57 @@ textarea.form-control {
     flex-direction: column;
     overflow: hidden;
     height: 100%;
+    flex-shrink: 0;
 }
 
 .chat-header {
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chat-header-top {
+    display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-    .chat-header h3 {
-        margin: 0;
-        font-size: 1.1rem;
-    }
+.chat-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0;
+}
 
-    .chat-header span {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
+.chat-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.message-count {
+    font-weight: 500;
+}
+
+.chat-internal-note {
+    background: var(--primary-red-light);
+    color: var(--primary-red);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+    .chat-internal-note svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
     }
 
 .chat-messages {
@@ -2478,21 +2770,66 @@ textarea.form-control {
     text-align: center;
     padding: 40px 20px;
     color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.no-messages-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-red-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-red);
+}
+
+.no-messages h4 {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.no-messages p {
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 300px;
 }
 
 .message {
     display: flex;
     gap: 12px;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .message-own {
     flex-direction: row-reverse;
 }
 
-.message-avatar img,
-.avatar-placeholder {
-    width: 40px;
-    height: 40px;
+.message-avatar {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+.avatar-small {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -2505,6 +2842,7 @@ textarea.form-control {
     justify-content: center;
     font-size: 0.9rem;
     font-weight: 600;
+    border-radius: 50%;
 }
 
 .message-content {
@@ -2512,198 +2850,68 @@ textarea.form-control {
     background: var(--gray-light);
     padding: 12px 16px;
     border-radius: 12px;
+    position: relative;
 }
 
 .message-own .message-content {
-    background: var(--primary-red);
+    background: #4361ee;
     color: white;
 }
 
 .message-internal .message-content {
-    background: #FFF3E0;
-    border: 1px solid #FFE0B2;
+    background: #f0f7ff;
+    border: 1px solid #d0e3f0;
 }
 
 .message-header {
     display: flex;
-    gap: 8px;
     align-items: center;
-    margin-bottom: 8px;
+    gap: 6px;
+    margin-bottom: 6px;
     font-size: 0.85rem;
+}
+
+.message-author-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.message-author {
+    font-weight: 500;
+    color: var(--text-dark);
 }
 
 .message-own .message-author {
     color: rgba(255, 255, 255, 0.9);
 }
 
-.message-time {
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-}
-
-.message-own .message-time {
-    color: rgba(255, 255, 255, 0.7);
-}
-
 .badge-internal {
     background: #F57C00;
     color: white;
-    padding: 2px 8px;
-    border-radius: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
     font-size: 0.7rem;
+    font-weight: 500;
+    margin-left: 4px;
 }
 
 .message-text {
     line-height: 1.5;
     word-break: break-word;
-}
-
-.message-attachments {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.attachment-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 8px;
-    text-decoration: none;
-    color: inherit;
-    font-size: 0.85rem;
-}
-
-.message-own .attachment-link {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.message-edited {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin-top: 8px;
-    font-style: italic;
-}
-
-.chat-input-area {
-    padding: 16px 20px;
-    border-top: 1px solid var(--border-color);
-    background: var(--gray-light);
-}
-
-.comment-options {
-    margin-bottom: 12px;
-}
-
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-.input-wrapper {
-    position: relative;
-}
-
-.comment-textarea {
-    width: 100%;
-    padding: 12px;
-    padding-right: 120px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    resize: none;
-    font-family: inherit;
     font-size: 0.95rem;
 }
 
-    .comment-textarea:focus {
-        outline: none;
-        border-color: var(--primary-red);
-    }
-
-.input-actions {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    display: flex;
-    gap: 8px;
-}
-
-.btn-attach,
-.btn-send {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.2s;
-}
-
-.btn-attach {
-    background: transparent;
-    color: var(--text-secondary);
-}
-
-    .btn-attach:hover {
-        color: var(--primary-red);
-        background: var(--primary-red-light);
-    }
-
-.btn-send {
-    background: var(--primary-red);
-    color: white;
-}
-
-    .btn-send:hover {
-        background: var(--primary-red-hover);
-    }
-
-.selected-files {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+.message-attachments {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
     margin-top: 12px;
-}
-
-.selected-file {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 0.85rem;
-}
-
-    .selected-file .file-size {
-        color: var(--text-secondary);
-        font-size: 0.75rem;
-    }
-
-/* Адаптивность */
-@media (max-width: 1200px) {
-    .ticket-details-layout {
-        grid-template-columns: 1fr;
-        height: auto;
-    }
-
-    .chat-panel {
-        height: 600px;
-    }
 }
 
 /* === AttachmentCell — как в VK === */
 .AttachmentCell {
-    position: relative; /* ← ЭТО ОБЯЗАТЕЛЬНО! */
+    position: relative;
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 12px;
@@ -2714,6 +2922,7 @@ textarea.form-control {
     text-decoration: none;
     color: var(--color_text_primary);
 }
+
 .AttachmentCell--clickable {
     cursor: pointer;
 }
@@ -2812,39 +3021,303 @@ textarea.form-control {
     fill: currentColor;
 }
 
-#context-menu button {
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
+.message-edited {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    font-style: italic;
 }
 
-    #context-menu button:hover {
-        background-color: #f5f5f5;
-    }
-
-
-.comment-error-message {
-    background: #fee;
-    color: #c33;
-    padding: 8px 12px;
-    border-radius: 4px;
+.message-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-top: 8px;
-    font-size: 14px;
-    border-bottom: 3px solid #f55;
-    animation: fadeIn 0.3s ease;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.message-time {
+    white-space: nowrap;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.8;
 }
 
-.image-preview img {
+.message-own .message-time {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.message-options-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    border-radius: 4px;
     cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.2s;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .message-options-btn:hover {
+        background: rgba(0, 0, 0, 0.05);
+        opacity: 1;
+    }
+
+.message-own .message-options-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.message-options-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.chat-input-area {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--gray-light);
+}
+
+.comment-options {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+    .checkbox-label:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--primary-red);
+    }
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.comment-textarea {
+    width: 100%;
+    min-height: 40px;
+    max-height: 150px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    resize: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    background: white;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+    .comment-textarea:focus {
+        outline: none;
+        border-color: var(--primary-red);
+        box-shadow: 0 0 0 3px var(--primary-red-light);
+    }
+
+.input-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.btn-attach, .btn-send {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+}
+
+.btn-attach {
+    color: var(--text-secondary);
+}
+
+    .btn-attach:hover {
+        background: var(--primary-red-light);
+        color: var(--primary-red);
+    }
+
+.btn-send {
+    background: #4361ee;
+    color: white;
+}
+
+    .btn-send:hover {
+        background: #3a56d4;
+        transform: scale(1.05);
+    }
+
+    .btn-attach svg, .btn-send svg {
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+    }
+
+.file-preview-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+/* Контекстное меню */
+#context-menu {
+    position: absolute;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 180px;
+    color: var(--text-dark);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9rem;
+    overflow: hidden;
+    transform: translateX(-50%);
+}
+
+    #context-menu button {
+        width: 100%;
+        text-align: left;
+        padding: 8px 16px;
+        background: none;
+        border: none;
+        color: var(--text-dark);
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        #context-menu button:hover {
+            background: var(--primary-red-light);
+            color: var(--primary-red);
+        }
+
+        #context-menu button svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .ticket-details-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .chat-panel {
+        height: 600px;
+    }
+
+    .participants-grid,
+    .management-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .attachments-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ticket-attachments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.ticket-attachment-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+    .ticket-attachment-item:hover {
+        background: #F3F4F6;
+        border-color: #D1D5DB;
+    }
+
+.ticket-attachment-preview {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #FFFFFF;
+}
+
+    .ticket-attachment-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .ticket-attachment-preview svg {
+        width: 28px;
+        height: 28px;
+        color: #8a8a9e;
+    }
+
+.ticket-attachment-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ticket-attachment-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #111827;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 4px;
+}
+
+.ticket-attachment-meta {
+    font-size: 0.7rem;
+    color: #6B7280;
 }

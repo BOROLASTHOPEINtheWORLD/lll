@@ -281,9 +281,10 @@ namespace labsupport.Services
                 .OrderBy(c => c.CreatedAt)
                 .ToListAsync();
 
+            // Фильтруем историю - исключаем "Комментарий" и "Создание" (если не хотите показывать создание)
             var history = await _context.TicketHistories
                 .Include(h => h.User)
-                .Where(h => h.TicketId == id)
+                .Where(h => h.TicketId == id && h.FieldName != "Комментарий")
                 .OrderByDescending(h => h.ChangedAt)
                 .ToListAsync();
 
@@ -311,11 +312,11 @@ namespace labsupport.Services
                 Content = content,
                 IsInternal = isInternal,
                 CreatedAt = DateTime.Now,
-                EditedAt = null  
+                EditedAt = null
             };
 
             _context.TicketComments.Add(comment);
-            await _context.SaveChangesAsync(); // ← ТУТ ВСЁ НОРМ
+            await _context.SaveChangesAsync();
 
             // Обновляем UpdatedAt у заявки
             var ticket = await _context.Tickets.FindAsync(ticketId);
@@ -335,23 +336,22 @@ namespace labsupport.Services
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Ошибка при сохранении вложений для комментария {CommentId}", comment.Id);
-                    // НЕ ПРОГЛАТЫВАЙ ОШИБКУ - ПРОБРОСЬ ДАЛЬШЕ
                     throw;
                 }
             }
 
-            // Добавляем запись в историю
-            var history = new TicketHistory
-            {
-                TicketId = ticketId,
-                UserId = userId,
-                FieldName = "Комментарий",
-                OldValue = null,
-                NewValue = isInternal ? "Добавлен внутренний комментарий" : "Добавлен комментарий",
-                ChangedAt = DateTime.Now
-            };
-            _context.TicketHistories.Add(history);
-            await _context.SaveChangesAsync();
+            // УДАЛИТЕ ЭТОТ БЛОК - НЕ ДОБАВЛЯЕМ КОММЕНТАРИИ В ИСТОРИЮ
+            // var history = new TicketHistory
+            // {
+            //     TicketId = ticketId,
+            //     UserId = userId,
+            //     FieldName = "Комментарий",
+            //     OldValue = null,
+            //     NewValue = isInternal ? "Добавлен внутренний комментарий" : "Добавлен комментарий",
+            //     ChangedAt = DateTime.Now
+            // };
+            // _context.TicketHistories.Add(history);
+            // await _context.SaveChangesAsync();
 
             return comment;
         }
