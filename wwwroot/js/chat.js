@@ -60,34 +60,50 @@
             if (isImage) {
                 const iconBlock = cell.querySelector('.AttachmentCell__imageBlock');
                 if (iconBlock) {
-                    // Убираем иконку
-                    iconBlock.innerHTML = '';
-
-                    // Находим путь к файлу из onclick атрибута
-                    const onClickAttr = cell.getAttribute('onclick');
-                    if (onClickAttr && onClickAttr.includes("window.open")) {
-                        const filePath = onClickAttr.match(/'([^']+)'/)[1]; // вытаскиваем путь
-
-                        // Создаем img
-                        const img = document.createElement('img');
-                        img.src = filePath;
-                        img.style.width = '100%';
-                        img.style.height = '100%';
-                        img.style.objectFit = 'cover';
-                        img.style.borderRadius = '4px';
-                        img.loading = 'lazy';
-
-                        // Заменяем содержимое
-                        iconBlock.appendChild(img);
-                        iconBlock.classList.add('image-preview');
-
+                    // Если это img, то уже обработано через Razor
+                    if (iconBlock.querySelector('img')) {
                         // Убираем onclick и добавляем клик на открытие модального окна
-                        cell.removeAttribute('onclick');
+                        const filePath = cell.dataset.filePath || '';
                         cell.classList.add('AttachmentCell--clickable');
-                        cell.addEventListener('click', () => {
+                        cell.addEventListener('click', (e) => {
+                            if (e.target.closest('.AttachmentCell__remove')) return;
                             window.FilePreviewHelper.openImageModal(filePath, fileName);
                         });
+                    } else {
+                        // Старая логика для совместимости
+                        const onClickAttr = cell.getAttribute('onclick');
+                        if (onClickAttr && onClickAttr.includes("window.open")) {
+                            const filePath = onClickAttr.match(/'([^']+)'/)[1];
+                            
+                            iconBlock.innerHTML = '';
+                            const img = document.createElement('img');
+                            img.src = filePath;
+                            img.style.width = '100%';
+                            img.style.height = '100%';
+                            img.style.objectFit = 'cover';
+                            img.style.borderRadius = '4px';
+                            img.loading = 'lazy';
+
+                            iconBlock.appendChild(img);
+                            iconBlock.classList.add('image-preview');
+
+                            cell.removeAttribute('onclick');
+                            cell.classList.add('AttachmentCell--clickable');
+                            cell.addEventListener('click', () => {
+                                window.FilePreviewHelper.openImageModal(filePath, fileName);
+                            });
+                        }
                     }
+                }
+            } else {
+                // Для не-изображений тоже добавляем обработчик клика
+                const filePath = cell.dataset.filePath || '';
+                if (filePath) {
+                    cell.classList.add('AttachmentCell--clickable');
+                    cell.addEventListener('click', (e) => {
+                        if (e.target.closest('.AttachmentCell__remove')) return;
+                        window.open(filePath, '_blank');
+                    });
                 }
             }
         });

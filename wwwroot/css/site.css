@@ -2515,8 +2515,8 @@ textarea.form-control {
 }
 
 .message-own .message-content {
-    background: var(--primary-red);
-    color: white;
+    background: #fee2e2;
+    color: #1f2937;
 }
 
 .message-internal .message-content {
@@ -2561,7 +2561,7 @@ textarea.form-control {
 .message-attachments {
     margin-top: 12px;
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
@@ -3343,4 +3343,28 @@ textarea.form-control {
     .chat-panel-v2 {
         min-height: 500px;
     }
+}
+
+/* Кнопка показать ещё для истории */
+.btn-show-more {
+    background: #f3f4f6;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #6B7280;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.btn-show-more:hover {
+    background: #e5e7eb;
+}
+
+/* Grid для вложений */
+.attachments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
 }
