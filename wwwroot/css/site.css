@@ -72,7 +72,7 @@ body {
         }
 
             .login-container .logo h1 span {
-                color: #3B82F6;
+                color: #DC2626;
             }
 
         /* Разделитель под лого */
@@ -2413,7 +2413,7 @@ textarea.form-control {
     background: #F9FAFB;
     padding: 16px;
     border-radius: 12px;
-    border-left: 4px solid var(--primary-blue);
+    border-left: 4px solid #DC2626;
 }
 
 .user-info {
@@ -2455,8 +2455,8 @@ textarea.form-control {
 }
 
 .attachment-item:hover {
-    background: var(--primary-blue-extra-light);
-    border-color: var(--primary-blue);
+    background: rgba(220, 38, 38, 0.05);
+    border-color: #DC2626;
     transform: translateX(4px);
 }
 
@@ -2482,7 +2482,7 @@ textarea.form-control {
     transform: translateY(-50%);
     width: 9px;
     height: 9px;
-    background: var(--primary-blue);
+    background: #DC2626;
     border-radius: 50%;
 }
 
@@ -2532,13 +2532,13 @@ textarea.form-control {
 }
 
 .actions-card .form-control:hover {
-    border-color: var(--primary-blue);
+    border-color: #DC2626;
 }
 
 .actions-card .form-control:focus {
     outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px var(--primary-blue-light);
+    border-color: #DC2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 /* ========== ОБНОВЛЕННЫЙ ЧАТ - СОВРЕМЕННЫЙ ДИЗАЙН ========== */
@@ -2638,7 +2638,7 @@ textarea.form-control {
 }
 
 .avatar-placeholder {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-hover) 100%);
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
     color: white;
     display: flex;
     align-items: center;
@@ -2657,9 +2657,9 @@ textarea.form-control {
 }
 
 .message-own .message-content {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-hover) 100%);
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
     color: white;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 .message-internal .message-content {
@@ -2771,7 +2771,7 @@ textarea.form-control {
 .checkbox-label input[type="checkbox"] {
     width: 18px;
     height: 18px;
-    accent-color: var(--primary-blue);
+    accent-color: #DC2626;
     cursor: pointer;
 }
 
@@ -2795,9 +2795,9 @@ textarea.form-control {
 
 .comment-textarea:focus {
     outline: none;
-    border-color: var(--primary-blue);
+    border-color: #DC2626;
     background: white;
-    box-shadow: 0 0 0 4px var(--primary-blue-light);
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
 }
 
 .comment-textarea::placeholder {
@@ -2835,8 +2835,8 @@ textarea.form-control {
 }
 
 .btn-attach:hover {
-    color: var(--primary-blue);
-    background: var(--primary-blue-light);
+    color: #DC2626;
+    background: rgba(220, 38, 38, 0.1);
     transform: scale(1.05);
 }
 
@@ -2846,15 +2846,15 @@ textarea.form-control {
 }
 
 .btn-send {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-hover) 100%);
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
     color: white;
     gap: 8px;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 .btn-send:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
 }
 
 .btn-send:active {
