@@ -25,8 +25,6 @@ public partial class LabsupportContext : DbContext
 
     public virtual DbSet<Role> Roles { get; set; }
 
-    public virtual DbSet<SatisfactionRating> SatisfactionRatings { get; set; }
-
     public virtual DbSet<Subcategory> Subcategories { get; set; }
 
     public virtual DbSet<Ticket> Tickets { get; set; }
@@ -135,38 +133,6 @@ public partial class LabsupportContext : DbContext
                 .HasColumnName("name");
         });
 
-        modelBuilder.Entity<SatisfactionRating>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("satisfaction_ratings_pkey");
-
-            entity.ToTable("satisfaction_ratings");
-
-            entity.HasIndex(e => e.TicketId, "idx_satisfaction_ticket");
-
-            entity.HasIndex(e => e.TicketId, "satisfaction_ratings_ticket_id_key").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Comment).HasColumnName("comment");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Rating).HasColumnName("rating");
-            entity.Property(e => e.TicketId).HasColumnName("ticket_id");
-            entity.Property(e => e.UserId)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("user_id");
-
-            entity.HasOne(d => d.Ticket).WithOne(p => p.SatisfactionRating)
-                .HasForeignKey<SatisfactionRating>(d => d.TicketId)
-                .HasConstraintName("satisfaction_ratings_ticket_id_fkey");
-
-            entity.HasOne(d => d.User).WithMany(p => p.SatisfactionRatings)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("satisfaction_ratings_user_id_fkey");
-        });
-
         modelBuilder.Entity<Subcategory>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("subcategories_pkey");
@@ -220,6 +186,7 @@ public partial class LabsupportContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("due_date");
             entity.Property(e => e.Priority).HasColumnName("priority");
+            entity.Property(e => e.Rating).HasColumnName("rating");
             entity.Property(e => e.Resolution).HasColumnName("resolution");
             entity.Property(e => e.ResolvedAt)
                 .HasColumnType("timestamp without time zone")
@@ -306,7 +273,6 @@ public partial class LabsupportContext : DbContext
                 .HasColumnName("is_internal");
             entity.Property(e => e.TicketId).HasColumnName("ticket_id");
             entity.Property(e => e.UserId)
-                .ValueGeneratedOnAdd()
                 .HasColumnName("user_id");
 
             entity.HasOne(d => d.Ticket).WithMany(p => p.TicketComments)
@@ -440,6 +406,9 @@ public partial class LabsupportContext : DbContext
             entity.Property(e => e.LastLoginAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("last_login_at");
+            entity.Property(e => e.LastSeenAt)
+              .HasColumnType("timestamp without time zone")
+              .HasColumnName("last_seen_at");
             entity.Property(e => e.LastName)
                 .HasMaxLength(50)
                 .HasColumnName("last_name");
@@ -491,9 +460,7 @@ public partial class LabsupportContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
 
-            // Проверочные约束 (CHECK)
             entity.HasCheckConstraint("ticket_priority_changes_old_priority_check", "old_priority BETWEEN 1 AND 5");
-            entity.HasCheckConstraint("ticket_priority_changes_new_priority_check", "new_priority BETWEEN 1 AND 5");
 
             // Связи
             entity.HasOne(d => d.Ticket)

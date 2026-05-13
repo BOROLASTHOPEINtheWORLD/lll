@@ -40,8 +40,7 @@ public partial class User
     public virtual Position? Position { get; set; }
 
     public virtual Role Role { get; set; } = null!;
-
-    public virtual ICollection<SatisfactionRating> SatisfactionRatings { get; set; } = new List<SatisfactionRating>();
+    public DateTime? LastSeenAt { get; set; }
 
     public virtual ICollection<Ticket> TicketAssignedTos { get; set; } = new List<Ticket>();
 

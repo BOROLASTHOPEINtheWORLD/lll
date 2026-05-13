@@ -21,6 +21,7 @@ public partial class Ticket
     public int AssignedToId { get; set; }
 
     public short Priority { get; set; }
+    public short? Rating { get; set; } 
 
     public DateTime? CreatedAt { get; set; }
 
@@ -39,8 +40,6 @@ public partial class Ticket
     public virtual MainCategory? Category { get; set; }
 
     public virtual User CreatedBy { get; set; } = null!;
-
-    public virtual SatisfactionRating? SatisfactionRating { get; set; }
 
     public virtual TicketStatus Status { get; set; } = null!;
 

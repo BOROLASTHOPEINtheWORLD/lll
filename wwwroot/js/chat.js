@@ -504,6 +504,28 @@
         const noMessages = container.querySelector('.no-messages');
         if (noMessages) noMessages.remove();
 
+        // Если это системное сообщение (userId === null) — отрисовываем его по-особому и выходим
+        if (message.userId === null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message message-system';
+            messageDiv.dataset.commentId = message.id;
+
+            const timeFormatted = this.formatTime(message.createdAt);
+            messageDiv.innerHTML = `
+        <div class="system-message-content">
+            <svg class="system-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-10h2v8h-2V7z"/>
+            </svg>
+            <span class="system-message-text">${this.escapeHtml(message.content).replace(/\n/g, '<br>')}</span>
+            <span class="message-time system-time" data-time="${message.createdAt}">${timeFormatted}</span>
+        </div>
+    `;
+            container.appendChild(messageDiv);
+            this.scrollToBottom();
+            return;
+        }
+
+        // Обычное сообщение
         const isOwn = message.userId === this.currentUserId;
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isOwn ? 'message-own' : ''} ${message.isInternal ? 'message-internal' : ''}`;
@@ -517,43 +539,42 @@
             ? this.generateAttachmentsHtml(message.attachments)
             : '';
 
-        // Форматирование времени
         const timeFormatted = this.formatTime(message.createdAt);
 
         const editedHtml = message.editedAt
             ? `<div class="message-edited">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px; opacity: 0.6;">
-                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                </svg>
-                Изменено
-            </div>`
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px; opacity: 0.6;">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            </svg>
+            Изменено
+        </div>`
             : '';
 
         messageDiv.innerHTML = `
-            <div class="message-avatar">
-                ${avatarHtml}
-            </div>
-            <div class="message-content">
-                <div class="message-header">
-                    <div class="message-author-info">
-                        <span class="message-author">${this.escapeHtml(message.authorName)}</span>
-                        ${message.isInternal ? '<span class="badge-internal">Внутренний</span>' : ''}
-                    </div>
-                </div>
-                <div class="message-text">${this.escapeHtml(message.content)}</div>
-                ${attachmentsHtml}
-                ${editedHtml}
-                <div class="message-footer">
-                    <span class="message-time local-time" data-time="${message.createdAt}">${timeFormatted}</span>
-                    ${isOwn ? `
-                    <button class="message-options-btn" title="Действия">
-                        <svg viewBox="0 0 24 24" width="14" height="14">
-                            <path fill="currentColor" d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z" />
-                        </svg>
-                    </button>` : ''}
+        <div class="message-avatar">
+            ${avatarHtml}
+        </div>
+        <div class="message-content">
+            <div class="message-header">
+                <div class="message-author-info">
+                    <span class="message-author">${this.escapeHtml(message.authorName)}</span>
+                    ${message.isInternal ? '<span class="badge-internal">Внутренний</span>' : ''}
                 </div>
             </div>
-        `;
+            <div class="message-text">${this.escapeHtml(message.content)}</div>
+            ${attachmentsHtml}
+            ${editedHtml}
+            <div class="message-footer">
+                <span class="message-time local-time" data-time="${message.createdAt}">${timeFormatted}</span>
+                ${isOwn ? `
+                <button class="message-options-btn" title="Действия">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <path fill="currentColor" d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z" />
+                    </svg>
+                </button>` : ''}
+            </div>
+        </div>
+    `;
 
         container.appendChild(messageDiv);
         this.processAttachmentsInElement(messageDiv);

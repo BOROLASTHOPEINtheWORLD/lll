@@ -1,4 +1,5 @@
 ﻿using labsupport.Hubs;
+using labsupport.Middleware;
 using labsupport.Models;
 using labsupport.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -16,6 +17,8 @@ namespace labsupport
 
             // Add services to the container.
             builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddDbContext<LabsupportContext>(options =>
@@ -133,8 +136,11 @@ namespace labsupport
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseMiddleware<UserActivityMiddleware>();
+
             app.UseStaticFiles();
             app.MapStaticAssets();
+
 
             app.MapHub<ChatHub>("/chathub");
             app.MapControllerRoute(

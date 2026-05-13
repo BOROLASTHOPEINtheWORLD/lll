@@ -1,9 +1,11 @@
 ﻿using labsupport.Hubs;
+using labsupport.Models;
 using labsupport.Services;
 using labsupport.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace labsupport.Controllers
@@ -14,7 +16,6 @@ namespace labsupport.Controllers
         private readonly ITicketService _ticketService;
         private readonly ILogger<TicketController> _logger;
 
-
         public TicketController(ITicketService ticketService, ILogger<TicketController> logger)
         {
             _ticketService = ticketService;
@@ -24,13 +25,11 @@ namespace labsupport.Controllers
         [HttpGet("tickets", Name = "TicketIndex")]
         public async Task<IActionResult> Index(string search, int? statusId, int? priority, int page = 1)
         {
-
             var userId = GetCurrentUserId();
             int pageSize = 10;
 
             var (tickets, totalCount) = await _ticketService.GetFilteredTicketsAsync(
                 userId, search, statusId, priority, page, 10);
-
 
             ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
             ViewBag.CurrentPage = page;
@@ -58,7 +57,7 @@ namespace labsupport.Controllers
         {
             var userId = GetCurrentUserId();
             if (string.IsNullOrWhiteSpace(content) && (attachments == null || attachments.Length == 0) && (existingAttachments == null || existingAttachments.Length == 0))
-                return BadRequest(new { error = "..." });
+                return BadRequest(new { error = "Содержимое комментария не может быть пустым" });
 
             try
             {
@@ -74,7 +73,7 @@ namespace labsupport.Controllers
                     }
                 }
 
-                // +++ НОВОЕ: Получаем данные комментария для отправки в SignalR
+                // Получаем данные комментария для отправки в SignalR
                 var commentDetails = await _ticketService.GetCommentWithDetailsAsync(comment.Id);
                 var messageDto = new
                 {
@@ -126,7 +125,7 @@ namespace labsupport.Controllers
                     await _ticketService.SaveMessageAttachmentsAsync(updatedComment.Id, attachments);
                 }
 
-                // +++ Отправим обновлённый коммент через SignalR
+                // Отправим обновлённый коммент через SignalR
                 var commentDetails = await _ticketService.GetCommentWithDetailsAsync(updatedComment.Id);
                 var messageDto = new
                 {
@@ -178,8 +177,12 @@ namespace labsupport.Controllers
         public async Task<IActionResult> UpdateStatus(long ticketId, short statusId)
         {
             var userId = GetCurrentUserId();
-            await _ticketService.UpdateTicketStatusAsync(ticketId, statusId, userId);
-            return RedirectToAction("Details", new { id = ticketId });
+            var result = await _ticketService.UpdateTicketStatusAsync(ticketId, statusId, userId);
+            if (!result.success)
+            {
+                return BadRequest(result.errorMessage);
+            }
+            return Ok(new { success = true });
         }
 
         [HttpPost]
@@ -211,7 +214,6 @@ namespace labsupport.Controllers
             }
         }
 
-
         [HttpGet]
         public async Task<IActionResult> GetComments(long ticketId)
         {
@@ -237,6 +239,7 @@ namespace labsupport.Controllers
                 }).ToList()
             }));
         }
+
         [HttpGet]
         public async Task<IActionResult> GetCommentById(long commentId)
         {
@@ -265,17 +268,18 @@ namespace labsupport.Controllers
 
             return Json(result);
         }
+
         [HttpGet]
         public async Task<IActionResult> GetStatuses()
         {
             var statuses = await _ticketService.GetAllStatusesAsync();
             return Json(statuses.Select(s => new { s.Id, s.Name }));
         }
+
         public async Task<IActionResult> Create()
         {
             // Загружаем категории
             ViewBag.Categories = await _ticketService.GetCategoriesAsync();
-
             ViewBag.Assignees = await _ticketService.GetAvailableAssigneesAsync();
 
             return View();
@@ -314,7 +318,7 @@ namespace labsupport.Controllers
             {
                 var ticket = await _ticketService.CreateTicketAsync(model, userId, attachments);
                 TempData["Success"] = $"Заявка #{ticket.TicketNumber} успешно создана!";
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Details", "Ticket", new { id = ticket.Id });
             }
             catch (Exception ex)
             {
@@ -326,6 +330,7 @@ namespace labsupport.Controllers
                 return View(model);
             }
         }
+
         [HttpGet]
         public async Task<IActionResult> GetSubcategories(short categoryId)
         {
@@ -333,10 +338,124 @@ namespace labsupport.Controllers
             return Json(subcategories);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelTicket(CancelTicketViewModel model)
+        {
+            var userId = GetCurrentUserId();
+
+            var result = await _ticketService.CancelTicketAsync(model.TicketId, userId, model.Reason);
+
+            if (!result.success)
+            {
+                return BadRequest(result.errorMessage);
+            }
+
+            return Ok(new { success = true, message = "Заявка успешно отменена" });
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]   // ⬅️ временно отключаем проверку токена
+        public async Task<IActionResult> DelegateTicket([FromBody] DelegateRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest("Некорректные данные");
+
+            try
+            {
+                await _ticketService.DelegateTicketAsync(
+                    request.TicketId,
+                    request.ToUserId,
+                    request.Reason,
+                    CurrentUserId              // сервер сам знает, кто делегирует
+                );
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Делегирование не выполнено");
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка делегирования");
+                return BadRequest("Внутренняя ошибка сервера");
+            }
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RateTicket(long ticketId, int rating)
+        {
+            var userId = GetCurrentUserId();
+            var result = await _ticketService.RateTicketAsync(ticketId, rating, userId);
+            if (!result.success)
+                return BadRequest(result.errorMessage);
+            return Ok();
+        }
+
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirstValue("UserId") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
             return int.TryParse(userIdClaim, out var userId) ? userId : 0;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDelegationCandidates(long ticketId)
+        {
+            var userId = GetCurrentUserId();
+            _logger.LogWarning($"GetDelegationCandidates: ticketId={ticketId}, userId={userId}");
+            // Получаем заявку через сервис (проверяет права)
+            var ticketExists = await _ticketService.GetTicketAssigneeIdAsync(ticketId, userId);
+            if (!ticketExists.HasValue)
+                return BadRequest("Заявка не найдена или вы не являетесь исполнителем");
+            var ticket = await _ticketService.GetTicketByIdAsync(ticketId, userId);
+            if (ticket == null) return BadRequest("Заявка не найдена");
+            // Получаем доступных исполнителей (инженеры и администраторы)
+            var candidates = await _ticketService.GetAvailableAssigneesAsync();
+            candidates = candidates.Where(u => u.Id != ticket.AssignedToId).ToList();
+
+            // Локальная функция для форматирования "был(а) ..."
+            string GetLastSeenText(DateTime? lastSeen)
+            {
+                if (!lastSeen.HasValue) return "давно";
+                var diff = DateTime.UtcNow - lastSeen.Value;
+                if (diff.TotalMinutes < 1) return "только что";
+                if (diff.TotalMinutes < 60) return $"{diff.Minutes} мин. назад";
+                if (diff.TotalHours < 24) return $"{diff.Hours} ч. назад";
+                if (diff.TotalDays < 7) return $"{diff.Days} дн. назад";
+                return lastSeen.Value.ToString("dd.MM.yyyy");
+            }
+
+            var result = candidates.Select(u => new
+            {
+                u.Id,
+                u.FirstName,
+                u.LastName,
+                u.MiddleName,
+                u.Email,
+                Role = u.Role?.Name ?? "Не указана",
+                Department = u.Department?.Name,
+                Position = u.Position?.Name,
+                LastSeenAt = u.LastSeenAt,
+                IsOnline = u.LastSeenAt.HasValue && (DateTime.UtcNow - u.LastSeenAt.Value).TotalMinutes < 5,
+                LastSeenText = GetLastSeenText(u.LastSeenAt),
+                AvatarPath = u.AvatarPath
+            });
+
+            return Ok(result);
+        }
+
+            public class CancelTicketViewModel
+        {
+            public long TicketId { get; set; }
+            public string Reason { get; set; } = string.Empty;
+        }
+
+        public class DelegateRequest
+        {
+            public long TicketId { get; set; }
+            public int ToUserId { get; set; }
+            public string Reason { get; set; }
         }
     }
 }

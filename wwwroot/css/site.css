@@ -1316,23 +1316,28 @@ textarea.form-control {
     }
 
 .image-modal-close {
-    position: absolute;
-    top: -40px;
-    right: 0;
-    background: transparent;
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    background: rgba(0, 0, 0, 0.6);
     border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 28px;
     color: white;
-    font-size: 32px;
-    font-weight: bold;
     cursor: pointer;
-    padding: 0;
-    width: 36px;
-    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.8;
+    z-index: 10001;
+    transition: all 0.2s ease;
 }
+
+    .image-modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+    }
 
     .image-modal-close:hover {
         opacity: 1;
@@ -3253,9 +3258,66 @@ textarea.form-control {
     }
 }
 
+
+.message-system {
+    display: flex;
+    justify-content: center;
+    margin: 4px 0; /* Минимальные отступы между сообщениями */
+}
+
+.system-message-content {
+    background: #f0f4ff;
+    border-left: 3px solid #4a6cf7;
+    padding: 6px 10px;
+    border-radius: 6px;
+    /* Компактная структура */
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    max-width: 80%;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #2c3e50;
+    /* Для позиционирования времени */
+    position: relative;
+}
+
+.system-icon {
+    color: #4a6cf7;
+    flex-shrink: 0;
+    /* Выравнивание иконки строго по первой строке текста */
+    margin-top: 1px;
+    width: 16px;
+    height: 16px;
+}
+
+.system-message-text {
+    word-break: break-word;
+    white-space: pre-wrap;
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    /* Убираем лишние отступы, которые создают дыры */
+    display: block;
+}
+
+.system-time {
+    font-size: 11px;
+    color: #9ca3af;
+    white-space: nowrap;
+    /* Позиционируем время в правом нижнем углу плашки */
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+    /* Чтобы время не наезжало на текст при коротких сообщениях */
+    background: linear-gradient(to right, rgba(240,244,255,0) 0%, #f0f4ff 20%);
+    padding-left: 10px;
+}
+
 .ticket-attachments-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 12px;
     margin-top: 12px;
 }
@@ -3320,4 +3382,779 @@ textarea.form-control {
 .ticket-attachment-meta {
     font-size: 0.7rem;
     color: #6B7280;
+}
+
+
+
+/*Онлайн*/
+.online-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+    .online-badge.online {
+        background: #D1FAE5;
+        color: #059669;
+    }
+
+    .online-badge.offline {
+        background: #F3F4F6;
+        color: #6B7280;
+    }
+
+.online-dot {
+    width: 6px;
+    height: 6px;
+    background: #10B981;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+.offline-dot {
+    width: 6px;
+    height: 6px;
+    background: #9CA3AF;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.participant-role {
+    font-size: 0.7rem;
+    color: #8B5CF6;
+    background: #EDE9FE;
+    padding: 2px 6px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+
+
+
+.history-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    vertical-align: middle;
+    display: inline-flex;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-icon {
+    font-size: 1.2em;
+    line-height: 1;
+}
+
+.priority-stars {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stars-container {
+    display: flex;
+    gap: 2px;
+}
+
+.star {
+    font-size: 1rem;
+    line-height: 1;
+    color: #D1D5DB;
+}
+
+    .star.active {
+        color: #F59E0B;
+    }
+
+.priority-label-text {
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+/* Стили для модальных окон */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 500px;
+    margin: 50px auto;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #6b7280;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+    .modal-close:hover {
+        background-color: #f3f4f6;
+    }
+
+.modal-body {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #1f2937;
+    }
+
+.form-select, .form-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+    .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    font-size: 0.875rem;
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+    .btn-secondary:hover {
+        background: #e5e7eb;
+    }
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+    .btn-primary:hover {
+        background: #2563eb;
+    }
+
+/* Стили для кнопок статусов */
+.status-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-status-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-accept {
+    background-color: #10b981;
+    color: white;
+}
+
+    .btn-accept:hover {
+        background-color: #059669;
+    }
+
+.btn-pause, .btn-rework {
+    background-color: #f59e0b;
+    color: white;
+}
+
+    .btn-pause:hover, .btn-rework:hover {
+        background-color: #d97706;
+    }
+
+.btn-complete {
+    background-color: #3b82f6;
+    color: white;
+}
+
+    .btn-complete:hover {
+        background-color: #2563eb;
+    }
+
+.btn-resume {
+    background-color: #6366f1;
+    color: white;
+}
+
+    .btn-resume:hover {
+        background-color: #4f46e5;
+    }
+
+.btn-rate {
+    background-color: #8b5cf6;
+    color: white;
+}
+
+    .btn-rate:hover {
+        background-color: #7c3aed;
+    }
+
+.btn-cancel {
+    background-color: #ef4444;
+    color: white;
+}
+
+    .btn-cancel:hover {
+        background-color: #dc2626;
+    }
+
+.assignee-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-delegate {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #64748b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+    .btn-delegate:hover {
+        background-color: #475569;
+    }
+
+.assignee-form {
+    margin-top: 4px;
+}
+
+.assignee-select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    background-color: white;
+    cursor: pointer;
+}
+
+/* Стили для делегирования */
+.delegation-history {
+    margin-top: 1.5rem;
+}
+
+.delegation-list {
+    margin-top: 8px;
+}
+
+.delegation-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.delegation-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+    .delegation-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .delegation-avatar .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #e5e7eb;
+        color: #6b7280;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+
+.delegation-info {
+    flex: 1;
+    font-size: 0.85rem;
+}
+
+.delegation-from, .delegation-to {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.delegation-arrow {
+    margin: 0 4px;
+    vertical-align: middle;
+    color: #6b7280;
+}
+
+.delegation-time {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+
+.delegation-reason {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Стили для истории */
+.section-header-with-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    padding: 8px 0;
+}
+
+    .section-header-with-toggle:hover {
+        opacity: 0.8;
+    }
+
+    .section-header-with-toggle .section-title {
+        margin-bottom: 0;
+    }
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+    width: 24px;
+    height: 24px;
+}
+
+#history-list-container {
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+}
+
+.history-count {
+    font-size: 0.8rem;
+    font-weight: normal;
+    color: #6B7280;
+    margin-left: 8px;
+}
+
+.history-old-value {
+    font-size: 0.75rem;
+    color: #9CA3AF;
+    margin-left: 6px;
+    font-weight: normal;
+}
+
+.history-toggle-more {
+    text-align: center;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #E5E7EB;
+}
+
+.toggle-history-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    color: #4B5563;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+    .toggle-history-btn:hover {
+        background: #F3F4F6;
+        border-color: #D1D5DB;
+    }
+
+    .toggle-history-btn svg {
+        transition: transform 0.2s ease;
+    }
+
+#history-section {
+    margin-top: 20px;
+}
+.rating-stars-large {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.star-rating {
+    color: #ccc;
+    transition: color 0.2s;
+}
+
+    .star-rating.active {
+        color: #FBBF24;
+    }
+
+.rating-message {
+    text-align: center;
+    margin-top: 15px;
+    color: #4b5563;
+}
+
+
+/*ОКНО ДЕЛЕГАЦИИ ПОИСКА*/
+/* Модальное окно делегирования */
+.delegation-modal .modal-large {
+    max-width: 800px;
+    width: 90%;
+}
+
+.delegation-body {
+    display: flex;
+    gap: 20px;
+    padding: 0 0 20px 0 !important;
+    min-height: 400px;
+}
+
+.delegation-left-panel {
+    flex: 1;
+    border-right: 1px solid #e5e7eb;
+    padding-right: 20px;
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+    .search-box svg {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+    }
+
+.search-input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background-color: #f9fafb;
+    transition: all 0.2s;
+}
+
+    .search-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background-color: white;
+    }
+
+.candidates-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.candidate-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 4px;
+}
+
+    .candidate-item:hover {
+        background-color: #f3f4f6;
+    }
+
+    .candidate-item.selected {
+        background-color: #e0e7ff;
+
+    }
+
+.candidate-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .candidate-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .candidate-avatar .initials {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #6b7280;
+    }
+
+.candidate-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.candidate-name {
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.candidate-role {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.online-status {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+    .online-status.online {
+        background-color: #10b981;
+        box-shadow: 0 0 0 2px rgba(16,185,129,0.2);
+    }
+
+    .online-status.offline {
+        background-color: #9ca3af;
+    }
+
+/* Правая панель с деталями */
+.delegation-right-panel {
+    flex: 1;
+    padding-left: 20px;
+    background: #f9fafb;
+    border-radius: 12px;
+}
+
+.user-details-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #9ca3af;
+    text-align: center;
+    padding: 20px;
+}
+
+.user-details-card {
+    padding: 20px;
+}
+
+.user-details-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.user-details-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .user-details-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .user-details-avatar .initials {
+        font-size: 1.5rem;
+        font-weight: 500;
+        color: #6b7280;
+    }
+
+.user-details-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.user-details-role {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.user-details-info {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 16px;
+}
+
+.info-row {
+    display: flex;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+}
+
+.info-label {
+    width: 100px;
+    color: #6b7280;
+    flex-shrink: 0;
+}
+
+.info-value {
+    color: #111827;
+    font-weight: 500;
+}
+
+.online-badge-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e5e7eb;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 20px;
+    color: #9ca3af;
 }

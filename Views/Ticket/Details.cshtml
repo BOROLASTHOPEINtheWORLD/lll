@@ -4,6 +4,41 @@
     ViewData["Title"] = $"Заявка #{Model.Ticket.TicketNumber}";
     var currentUserRoleId = User?.FindFirst("RoleId") != null ? int.Parse(User.FindFirst("RoleId")!.Value) : 0;
     bool isEngineerOrAdmin = currentUserRoleId == 1 || currentUserRoleId == 2;
+    
+    // Функция для определения статуса пользователя
+    string GetUserStatus(User user)
+    {
+        if (user == null) return "offline";
+    
+        var lastSeen = user.LastSeenAt;
+        if (!lastSeen.HasValue) return "offline";
+    
+        // ИСПОЛЬЗУЕМ UtcNow вместо Now!
+        var minutesAgo = (DateTime.UtcNow - lastSeen.Value).TotalMinutes;
+    
+        if (minutesAgo < 5) return "online";
+        if (minutesAgo < 60) return "away";
+        return "offline";
+    }
+    
+    // Функция для форматирования текста "Был(а)..."
+    string GetLastSeenText(User user)
+    {
+        if (user == null) return "неизвестно";
+    
+        var lastSeen = user.LastSeenAt;
+        if (!lastSeen.HasValue) return "давно";
+    
+        // ИСПРАВЛЕНО: используем UtcNow вместо Now!
+        var diff = DateTime.UtcNow - lastSeen.Value;
+    
+        if (diff.TotalMinutes < 1) return "только что";
+        if (diff.TotalMinutes < 60) return $"{diff.Minutes} мин. назад";
+        if (diff.TotalHours < 24) return $"{diff.Hours} ч. назад";
+        if (diff.TotalDays < 7) return $"{diff.Days} дн. назад";
+    
+        return lastSeen.Value.ToString("dd.MM.yyyy");
+    }
 }
 
 <div class="app-container">
@@ -36,8 +71,11 @@
                         <div class="status-badge @(Model.Ticket.Status.Name switch {
                             "Новая" => "status-new",
                             "В работе" => "status-progress",
+                            "В ожидании" => "status-awaiting",
                             "На проверке" => "status-review",
+                            "Доработка" => "status-rework",
                             "Завершена" => "status-done",
+                            "Оценена" => "status-rated",
                             "Отменена" => "status-cancel"
                         })">
                             <span class="status-icon">Статус заявки: </span>
@@ -65,10 +103,26 @@
                                 </span>
                             </div>
                         </div>
-
+                        @if (Model.Ticket.Rating.HasValue)
+                            {
+                                <div class="rating-meta">
+                                    <span class="status-icon">Оценка: </span>
+                                    <div class="priority-stars" style="display: inline-flex; align-items: center;">
+                                        <div class="stars-container">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <span class="star @(i <= Model.Ticket.Rating ? "active" : "")">★</span>
+                                            }
+                                        </div>
+                                        <span class="priority-label-text" style="margin-left: 8px;">
+                                            (@Model.Ticket.Rating)
+                                        </span>
+                                    </div>
+                                </div>
+                            }
                         @if (Model.Ticket.DueDate.HasValue)
                         {
-                            <div class="due-date @(Model.Ticket.DueDate < DateTime.Now ? "overdue" : "")">
+                            <div class="due-date @(Model.Ticket.DueDate < DateTime.UtcNow ? "overdue" : "")">
                                 <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                     <path d="M16 2v4"></path>
@@ -126,122 +180,220 @@
                     <div class="ticket-description">@(Model.Ticket.Description ?? "Описание отсутствует")</div>
                 </div>
 
-               <!-- Вложения -->
-<!-- Вложения -->
+   <!-- Вложения -->
 @if (Model.Ticket.TicketAttachments.Any())
 {
     <div class="ticket-section">
         <h2 class="section-title">
-            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-            </svg>
+    
             Вложения (@Model.Ticket.TicketAttachments.Count)
         </h2>
         <div id="ticket-attachments-container" class="ticket-attachments-grid"></div>
     </div>
 }
 
+
                 <!-- Участники -->
-                <div class="ticket-section">
-                    <h2 class="section-title">
-                        Участники
-                    </h2>
-                    <div class="participants-grid">
-                        <div class="participant-card">
-                            <div class="participant-header">
-                                <svg class="participant-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="9" cy="7" r="4"></circle>
-                                </svg>
-                                Автор
-                            </div>
-                            <div class="participant-content">
-                                <div class="participant-avatar">
-                                    <partial name="_UserAvatar" model="Model.Ticket.CreatedBy" />
-                                </div>
-                                <div class="participant-info">
-                                    <span class="participant-name">@Model.Ticket.CreatedBy.LastName @Model.Ticket.CreatedBy.FirstName</span>
-                                    <span class="participant-details">@Model.Ticket.CreatedBy.Department?.Name</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="participant-card">
-                            <div class="participant-header">
-                                <svg class="participant-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="8.5" cy="7" r="4"></circle>
-                                    <polyline points="17 11 19 13 23 9"></polyline>
-                                </svg>
-                                Исполнитель
-                            </div>
-                            <div class="participant-content">
-                                <div class="participant-avatar">
-                                    <partial name="_UserAvatar" model="Model.Ticket.AssignedTo" />
-                                </div>
-                                <div class="participant-info">
-                                    <span class="participant-name">@Model.Ticket.AssignedTo.LastName @Model.Ticket.AssignedTo.FirstName</span>
-                                    <span class="participant-details">@Model.Ticket.AssignedTo.Department?.Name</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+               <div class="ticket-section">
+    <h2 class="section-title">Участники</h2>
+    <div class="participants-grid">
+        <!-- АВТОР -->
+        <div class="participant-card" data-user-id="@Model.Ticket.CreatedBy.Id">
+            <div class="participant-header">
+                <svg class="participant-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+                Автор
+                @{
+                    var authorStatus = GetUserStatus(Model.Ticket.CreatedBy);
+                }
+                @if (authorStatus == "online")
+                {
+                    <span class="online-badge online">
+                        <span class="online-dot"></span> В сети
+                    </span>
+                }
+                else
+                {
+                    <span class="online-badge offline">
+                        <span class="offline-dot"></span> Был(а) @GetLastSeenText(Model.Ticket.CreatedBy)
+                    </span>
+                }
+            </div>
+            <div class="participant-content">
+                <div class="participant-avatar">
+                    <partial name="_UserAvatar" model="Model.Ticket.CreatedBy" />
                 </div>
+                <div class="participant-info">
+                    <span class="participant-name">@Model.Ticket.CreatedBy.LastName @Model.Ticket.CreatedBy.FirstName</span>
+                    <span class="participant-details">@Model.Ticket.CreatedBy.Department?.Name</span>
+                    <span class="participant-role">@Model.Ticket.CreatedBy.Role?.Name</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ИСПОЛНИТЕЛЬ -->
+        <div class="participant-card" data-user-id="@(Model.Ticket.AssignedTo?.Id)">
+            <div class="participant-header">
+                <svg class="participant-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <polyline points="17 11 19 13 23 9"></polyline>
+                </svg>
+                Исполнитель
+                @if (Model.Ticket.AssignedTo != null)
+                {
+                    var executorStatus = GetUserStatus(Model.Ticket.AssignedTo);
+                    if (executorStatus == "online")
+                    {
+                        <span class="online-badge online">
+                            <span class="online-dot"></span> В сети
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="online-badge offline">
+                            <span class="offline-dot"></span> Был(а) @GetLastSeenText(Model.Ticket.AssignedTo)
+                        </span>
+                    }
+                }
+                else
+                {
+                    <span class="online-badge offline">Не назначен</span>
+                }
+            </div>
+            <div class="participant-content">
+                <div class="participant-avatar">
+                    <partial name="_UserAvatar" model="Model.Ticket.AssignedTo" />
+                </div>
+                <div class="participant-info">
+                    @if (Model.Ticket.AssignedTo != null)
+                    {
+                        <span class="participant-name">@Model.Ticket.AssignedTo.LastName @Model.Ticket.AssignedTo.FirstName</span>
+                        <span class="participant-details">@Model.Ticket.AssignedTo.Department?.Name</span>
+                        <span class="participant-role">@Model.Ticket.AssignedTo.Role?.Name</span>
+                    }
+                    else
+                    {
+                        <span class="participant-name">Не назначен</span>
+                    }
+                </div>
+            </div>
+        </div>
+        
+     
+    </div>
+</div>
 
                 <!-- Управление (только для инженеров/админов) -->
-                @if (isEngineerOrAdmin)
+                <!-- Управление (только для инженеров/админов) -->
+@if (isEngineerOrAdmin || Model.Ticket.CreatedById == Model.CurrentUser.Id)
+{
+    var statusId = Model.Ticket.StatusId;
+    var isAssignedToMe = Model.Ticket.AssignedToId == Model.CurrentUser.Id;
+    var isCreator = Model.Ticket.CreatedById == Model.CurrentUser.Id;
+    
+    <div class="ticket-section">
+        <h2 class="section-title">Управление заявкой</h2>
+        <div class="management-actions">
+            <!-- Блок статуса -->
+            <!-- Блок статуса -->
+<div class="action-group">
+    <label class="action-label">Статус</label>
+    <div class="status-actions">
+        @if (statusId == 1) // Новая
+        {
+            if (isAssignedToMe)
+            {
+                <button class="btn-status-action btn-accept" onclick="confirmStatusChange(@Model.Ticket.Id, 2)">
+                    Принять в работу
+                </button>
+            }
+        }
+        else if (statusId == 2) // В работе
+        {
+            <button class="btn-status-action btn-pause" onclick="confirmStatusChange(@Model.Ticket.Id, 3)">
+                В ожидании
+            </button>
+            <button class="btn-status-action btn-complete" onclick="confirmStatusChange(@Model.Ticket.Id, 4)">
+                Отправить на проверку
+            </button>
+        }
+        else if (statusId == 3) // В ожидании
+        {
+            <button class="btn-status-action btn-resume" onclick="confirmStatusChange(@Model.Ticket.Id, 2)">
+                Вернуть в работу
+            </button>
+        }
+        else if (statusId == 4) // На проверке
+        {
+            if (isCreator)
+            {
+                <button class="btn-status-action btn-rework" onclick="confirmStatusChange(@Model.Ticket.Id, 5)">
+                    На доработку
+                </button>
+                <button class="btn-status-action btn-complete" onclick="confirmStatusChange(@Model.Ticket.Id, 6)">
+                    Завершить
+                </button>
+            }
+        }
+        else if (statusId == 5) // Доработка
+        {
+            <button class="btn-status-action btn-resume" onclick="confirmStatusChange(@Model.Ticket.Id, 2)">
+                Вернуть в работу
+            </button>
+        }
+        else if (statusId == 6) // Завершена
+        {
+            if (isCreator)
+            {
+                <button class="btn-status-action btn-rate" onclick="confirmStatusChange(@Model.Ticket.Id, 7)">
+                    Оценить
+                </button>
+            }
+        }
+
+        @if (statusId != 7 && statusId != 8)
+        {
+            <button class="btn-status-action btn-cancel" onclick="showCancelConfirmation(@Model.Ticket.Id)">
+                Отменить заявку
+            </button>
+        }
+    </div>
+</div>
+            
+            <!-- Блок исполнителя -->
+           <!-- Блок исполнителя -->
+        <div class="action-group">
+            <label class="action-label">Исполнитель</label>
+            <div class="assignee-actions">
+                @if (isAssignedToMe && statusId != 6 && statusId != 7)
                 {
-                    <div class="ticket-section">
-                        <h2 class="section-title">
-                            Управление заявкой
-                        </h2>
-                        <div class="management-actions">
-                            <div class="action-group">
-                                <label class="action-label">
-                                    <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                    </svg>
-                                    Статус
-                                </label>
-                                <form asp-action="UpdateStatus" method="post">
-                                    <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
-                                    <select name="statusId" class="status-select">
-                                        <option value="1" selected="@(Model.Ticket.StatusId == 1)">Новая</option>
-                                        <option value="2" selected="@(Model.Ticket.StatusId == 2)">В работе</option>
-                                        <option value="3" selected="@(Model.Ticket.StatusId == 3)">На проверке</option>
-                                        <option value="4" selected="@(Model.Ticket.StatusId == 4)">Завершена</option>
-                                        <option value="5" selected="@(Model.Ticket.StatusId == 5)">Отменена</option>
-                                    </select>
-                                </form>
-                            </div>
-                            
-                            <div class="action-group">
-                                <label class="action-label">
-                                    <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                        <circle cx="8.5" cy="7" r="4"></circle>
-                                        <polyline points="17 11 19 13 23 9"></polyline>
-                                    </svg>
-                                    Исполнитель
-                                </label>
-                                <form asp-action="UpdateAssignment" method="post">
-                                    <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
-                                    <select name="assignedToId" class="assignee-select">
-                                        @foreach (var assignee in Model.AvailableAssignees)
-                                        {
-                                            <option value="@assignee.Id" selected="@(assignee.Id == Model.Ticket.AssignedToId)">
-                                                @assignee.LastName @assignee.FirstName
-                                            </option>
-                                        }
-                                    </select>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+                    <button class="btn-delegate" onclick="openDelegationModal()">Делегировать</button>
                 }
+                @if (isEngineerOrAdmin && !isAssignedToMe)
+                {
+                    <form asp-action="UpdateAssignment" method="post" class="assignee-form">
+                        <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
+                        <select name="assignedToId" class="assignee-select" onchange="this.form.submit()">
+                            <option value="">-- Изменить исполнителя --</option>
+                            @foreach (var assignee in Model.AvailableAssignees)
+                            {
+                                <option value="@assignee.Id" selected="@(assignee.Id == Model.Ticket.AssignedToId)">
+                                    @assignee.LastName @assignee.FirstName
+                                </option>
+                            }
+                        </select>
+                    </form>
+                }
+            </div>
+        </div>
+        </div>
+    </div>
+}
 
                 <!-- История изменений - В САМОМ НИЗУ -->
-               <!-- История изменений - В САМОМ НИЗУ -->
 @if (Model.History.Any())
 {
     var historyList = Model.History.OrderByDescending(h => h.ChangedAt).ToList();
@@ -288,17 +440,27 @@
                                     
                                     switch (item.FieldName)
                                     {
-                                        case "Status":
+                                        case "Статус":
                                             icon = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>";
                                             changeText = $"изменил(а) статус на <strong>{item.NewValue}</strong>";
                                             break;
-                                        case "Priority":
+                                        case "Приоритет":
                                             icon = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='10'/><path d='M12 6v6l4 2'/></svg>";
                                             changeText = $"изменил(а) приоритет на <strong>{item.NewValue}</strong>";
                                             break;
-                                        case "AssignedTo":
+                                        case "Исполнитель":
                                             icon = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='8.5' cy='7' r='4'/><polyline points='17 11 19 13 23 9'/></svg>";
                                             changeText = $"изменил(а) исполнителя на <strong>{item.NewValue}</strong>";
+                                            break;
+                                        case "Делегирование":
+                                            icon = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 4l2.29 2.29-2.88 2.88 1.42 1.42 2.88-2.88L20 10V4zm-4 0H4v6l2.29-2.29 4.71 4.7V20h2v-8.41l-5.29-5.29z'/></svg>";
+                                            changeText = $"делегировал(а) заявку от <strong>{item.OldValue}</strong> к <strong>{item.NewValue}</strong>";
+               
+                                            break;
+                                        case "Отмена":
+                                            icon = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>";
+                                            changeText = $"отменил(а) заявку (был статус: <strong>{item.OldValue}</strong>)";
+
                                             break;
                                         default:
                                             icon = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M12 20h9'/><path d='M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'/></svg>";
@@ -307,10 +469,6 @@
                                     }
                                 }
                                 @Html.Raw(icon + changeText)
-                                @if (!string.IsNullOrEmpty(item.OldValue))
-                                {
-                                    <span class="history-old-value">(было: @item.OldValue)</span>
-                                }
                             </div>
                         </div>
                     </div>
@@ -343,17 +501,27 @@
                                             
                                             switch (item.FieldName)
                                             {
-                                                case "Status":
+                                                case "Статус":
                                                     iconHidden = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>";
                                                     changeTextHidden = $"изменил(а) статус на <strong>{item.NewValue}</strong>";
                                                     break;
-                                                case "Priority":
+                                                case "Приоритет":
                                                     iconHidden = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='10'/><path d='M12 6v6l4 2'/></svg>";
                                                     changeTextHidden = $"изменил(а) приоритет на <strong>{item.NewValue}</strong>";
                                                     break;
-                                                case "AssignedTo":
+                                                case "Исполнитель":
                                                     iconHidden = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='8.5' cy='7' r='4'/><polyline points='17 11 19 13 23 9'/></svg>";
                                                     changeTextHidden = $"изменил(а) исполнителя на <strong>{item.NewValue}</strong>";
+                                                    break;
+                                                case "Делегирование":
+                                                    iconHidden = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 4l2.29 2.29-2.88 2.88 1.42 1.42 2.88-2.88L20 10V4zm-4 0H4v6l2.29-2.29 4.71 4.7V20h2v-8.41l-5.29-5.29z'/></svg>";
+                                                    changeTextHidden = $"делегировал(а) заявку от <strong>{item.OldValue}</strong> к <strong>{item.NewValue}</strong>";
+     
+                                                    break;
+                                                case "Отмена":
+                                                    iconHidden = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>";
+                                                    changeTextHidden = $"отменил(а) заявку (был статус: <strong>{item.OldValue}</strong>)";
+
                                                     break;
                                                 default:
                                                     iconHidden = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M12 20h9'/><path d='M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'/></svg>";
@@ -362,10 +530,6 @@
                                             }
                                         }
                                         @Html.Raw(iconHidden + changeTextHidden)
-                                        @if (!string.IsNullOrEmpty(item.OldValue))
-                                        {
-                                            <span class="history-old-value">(было: @item.OldValue)</span>
-                                        }
                                     </div>
                                 </div>
                             </div>
@@ -388,7 +552,6 @@
 
             <!-- Правая часть - Чат -->
             <div class="chat-panel">
-                <!-- ... весь код чата остается без изменений ... -->
                 <div class="chat-header">
                     <div class="chat-header-top">
                         <h3>Чат заявки</h3>
@@ -410,8 +573,28 @@
                     }
                     else
                     {
+
                         @foreach (var comment in Model.Comments)
                         {
+@if (comment.UserId == null)
+{
+    <div class="message message-system" data-comment-id="@comment.Id">
+        <div class="system-message-content">
+            <svg class="system-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-10h2v8h-2V7z"/>
+            </svg>
+            <span class="system-message-text">
+                @Html.Raw(comment.Content.Replace("\n", "<br>"))
+            </span>
+            <span class="message-time local-time system-time" data-time="@comment.CreatedAt?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")">
+                @comment.CreatedAt?.ToString("HH:mm")
+            </span>
+        </div>
+    </div>
+}
+
+                            else
+                            {
                             bool isOwnComment = comment.UserId == Model.CurrentUser.Id;
                             bool isInternal = comment.IsInternal ?? false;
 
@@ -505,6 +688,7 @@
                                     </div>
                                 </div>
                             </div>
+                            }
                         }
                     }
                 </div>
@@ -553,6 +737,115 @@
             </div>
         </div>
     </main>
+</div>
+<!-- Модальное окно подтверждения изменения статуса -->
+<div id="status-change-modal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeStatusChangeModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="status-change-title">Подтверждение</h3>
+            <button class="modal-close" onclick="closeStatusChangeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="status-change-message">Вы уверены, что хотите изменить статус?</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="status-change-cancel-btn">Отмена</button>
+            <button class="btn btn-primary" id="status-change-confirm-btn">Подтвердить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для оценки -->
+<div id="rating-modal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeRatingModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Оцените выполнение заявки</h3>
+            <button class="modal-close" onclick="closeRatingModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="rating-stars-large">
+                <span class="star-rating" data-value="1">☆</span>
+                <span class="star-rating" data-value="2">☆</span>
+                <span class="star-rating" data-value="3">☆</span>
+                <span class="star-rating" data-value="4">☆</span>
+                <span class="star-rating" data-value="5">☆</span>
+            </div>
+            <div class="rating-message"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="rating-skip-btn">Пропустить</button>
+            <button class="btn btn-primary" id="rating-submit-btn" disabled>Отправить оценку</button>
+        </div>
+    </div>
+</div>
+<!-- Модальные окна -->
+<div id="cancel-confirmation-modal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeCancelConfirmationModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Подтверждение отмены заявки</h3>
+            <button class="modal-close" onclick="closeCancelConfirmationModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Вы действительно хотите отменить эту заявку? Это действие нельзя будет отменить.</p>
+            <form id="cancel-reason-form">
+                <input type="hidden" name="ticketId" id="cancel-ticket-id" value="@Model.Ticket.Id" />
+                <div class="form-group">
+                    <label for="cancel-reason">Причина отмены:</label>
+                    <textarea 
+                        name="reason" 
+                        id="cancel-reason" 
+                        class="form-textarea" 
+                        rows="3" 
+                        placeholder="Укажите причину отмены заявки..."
+                        required></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeCancelConfirmationModal()">Отмена</button>
+            <button type="button" class="btn btn-primary" onclick="confirmCancel()">Подтвердить отмену</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно делегирования с поиском и карточкой пользователя -->
+<div id="delegation-modal" class="modal delegation-modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeDelegationModal()"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3>Делегировать заявку</h3>
+            <button class="modal-close" onclick="closeDelegationModal()">&times;</button>
+        </div>
+        <div class="modal-body delegation-body">
+            <div class="delegation-left-panel">
+                <div class="search-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="delegation-search" placeholder="Поиск по имени, фамилии, роли..." class="search-input">
+                </div>
+                <div class="candidates-list" id="candidates-list">
+                    <div class="loading-spinner">Загрузка...</div>
+                </div>
+            </div>
+            <div class="delegation-right-panel" id="delegation-user-details">
+                <div class="user-details-placeholder">
+                    <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                    </svg>
+                    <p>Выберите пользователя из списка слева</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeDelegationModal()">Отмена</button>
+            <button type="button" class="btn btn-primary" id="delegation-confirm-btn" disabled>Делегировать</button>
+        </div>
+    </div>
 </div>
 
 <!-- Модальное окно для просмотра изображений -->
@@ -608,108 +901,77 @@
 </div>
 
 <script>
+    // ======================= ФОРМАТИРОВАНИЕ ВРЕМЕНИ =======================
+    function formatLocalTime(el) {
+        const isoTime = el.getAttribute('data-time');
+        if (!isoTime) return;
     
-// Запускаем после загрузки страницы
-document.addEventListener('DOMContentLoaded', function() {
-    initTicketAttachments();
-});
-    document.addEventListener('DOMContentLoaded', function() {
-        ChatHelper.init(@Model.Ticket.Id, @Model.CurrentUser.Id);
-    
-        setTimeout(() => {
-            ChatHelper.scrollToBottom();
-        }, 100);
-
-        // Функция для форматирования времени
-        function formatLocalTime(el) {
-            const isoTime = el.getAttribute('data-time');
-            if (!isoTime) return;
-        
-            const date = new Date(isoTime);
-            if (isNaN(date.getTime())) return;
-        
-            const now = new Date();
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-        
-            const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-        
-            const time = date.toLocaleTimeString('ru-RU', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hourCycle: 'h24'
-            });
-        
-            let formattedTime;
-        
-            if (dateOnly.getTime() === nowOnly.getTime()) {
-                formattedTime = `Сегодня, ${time}`;
-            } else if (dateOnly.getTime() === yesterdayOnly.getTime()) {
-                formattedTime = `Вчера, ${time}`;
-            } else if (date.getFullYear() === now.getFullYear()) {
-                formattedTime = date.toLocaleDateString('ru-RU', {
-                    day: 'numeric',
-                    month: 'long'
-                }) + `, ${time}`;
-            } else {
-                formattedTime = date.toLocaleDateString('ru-RU', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                }) + `, ${time}`;
-            }
-        
-            el.textContent = formattedTime;
-        
-            if (!el.title || el.title === '') {
-                el.title = date.toLocaleDateString('ru-RU', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hourCycle: 'h24'
-                });
-            }
+        let date = new Date(isoTime);
+        if (isNaN(date.getTime())) {
+            console.error('Invalid date:', isoTime);
+            return;
         }
-
-        // Обработка элементов с классом local-time
-        setTimeout(() => {
-            const allLocalTimeElements = document.querySelectorAll('.local-time');
-            allLocalTimeElements.forEach(el => {
-                if (el.closest('.message-footer') || el.closest('.message-edited')) {
-                    return;
-                }
-                formatLocalTime(el);
-            });
-        }, 200);
-
-        // Функция для сворачивания/разворачивания всей истории
-    window.toggleHistory = function() {
-    const container = document.getElementById('history-list-container');
-    const icon = document.getElementById('history-toggle-icon');
     
-    if (container.style.maxHeight && container.style.maxHeight !== 'none') {
-        container.style.maxHeight = 'none';
-        icon.style.transform = 'rotate(0deg)';
-    } else {
-        container.style.maxHeight = (container.scrollHeight + 50) + 'px';
-        icon.style.transform = 'rotate(180deg)';
-        setTimeout(() => {
-            container.style.maxHeight = 'none';
-        }, 300);
+        const now = new Date();
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+    
+        const isToday = date.getDate() === now.getDate() && 
+                       date.getMonth() === now.getMonth() && 
+                       date.getFullYear() === now.getFullYear();
+        const isYesterday = date.getDate() === yesterday.getDate() && 
+                           date.getMonth() === yesterday.getMonth() && 
+                           date.getFullYear() === yesterday.getFullYear();
+    
+        const time = date.toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    
+        if (isToday) {
+            el.textContent = `Сегодня, ${time}`;
+        } else if (isYesterday) {
+            el.textContent = `Вчера, ${time}`;
+        } else {
+            const dateStr = date.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short',
+                year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+            });
+            el.textContent = `${dateStr}, ${time}`;
+        }
+    
+        el.title = date.toLocaleString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
-}
 
-        // Функция для показа/скрытия дополнительных записей
-        window.toggleHiddenHistory = function() {
+    // ======================= ИСТОРИЯ (СВОРАЧИВАНИЕ) =======================
+    window.toggleHistory = function() {
+        const container = document.getElementById('history-list-container');
+        const icon = document.getElementById('history-toggle-icon');
+        
+        if (container.style.maxHeight && container.style.maxHeight !== 'none') {
+            container.style.maxHeight = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            container.style.maxHeight = (container.scrollHeight + 50) + 'px';
+            icon.style.transform = 'rotate(180deg)';
+            setTimeout(() => {
+                container.style.maxHeight = 'none';
+            }, 300);
+        }
+    }
+
+    window.toggleHiddenHistory = function() {
         const hiddenItems = document.getElementById('hidden-history-items');
         const btnText = document.getElementById('toggle-history-text');
         const btnIcon = document.getElementById('toggle-history-icon');
     
-        // Получаем значение из data-атрибута или из текста кнопки
         let hiddenCount = 0;
         const historySection = document.getElementById('history-section');
         if (historySection && historySection.dataset.hiddenCount) {
@@ -730,63 +992,598 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Инициализация
-    const container = document.getElementById('history-list-container');
-    if (container) {
-        container.style.maxHeight = 'none';
-        container.style.overflow = 'visible';
+    // ======================= МОДАЛЬНОЕ ПОДТВЕРЖДЕНИЕ СТАТУСА =======================
+    let pendingStatusChange = null;
+
+    window.confirmStatusChange = function(ticketId, statusId) {
+        pendingStatusChange = { ticketId, statusId };
+        const modal = document.getElementById('status-change-modal');
+        const messageEl = document.getElementById('status-change-message');
+        
+        let action = '';
+        switch (statusId) {
+            case 2: action = 'принять в работу'; break;
+            case 3: action = 'перевести в статус "В ожидании"'; break;
+            case 4: action = 'отправить на проверку'; break;
+            case 5: action = 'отправить на доработку'; break;
+            case 6: action = 'завершить заявку'; break;
+            case 7: action = 'оценить заявку'; break;
+            case 8: action = 'отменить заявку'; break;
+            default: action = 'изменить статус';
+        }
+        messageEl.textContent = `Вы уверены, что хотите ${action}?`;
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    };
+
+    function closeStatusChangeModal() {
+        document.getElementById('status-change-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        pendingStatusChange = null;
     }
 
-        // Контекстное меню
-        let currentCommentId = null;
-        let currentCommentContent = '';
+    document.getElementById('status-change-confirm-btn')?.addEventListener('click', async () => {
+        if (!pendingStatusChange) return;
+        const { ticketId, statusId } = pendingStatusChange;
+        closeStatusChangeModal();
+        
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const formData = new URLSearchParams();
+            formData.append('ticketId', ticketId);
+            formData.append('statusId', statusId);
+            
+            const response = await fetch('/Ticket/UpdateStatus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: formData
+            });
+            
+            if (response.ok) {
+                if (statusId === 6) {
+                    openRatingModal(ticketId);
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                const errorText = await response.text();
+                alert('Ошибка: ' + errorText);
+            }
+        } catch (err) {
+            alert('Ошибка сети: ' + err.message);
+        }
+    });
 
+    document.getElementById('status-change-cancel-btn')?.addEventListener('click', () => {
+        closeStatusChangeModal();
+    });
+
+    // ======================= ОЦЕНКА ЗАЯВКИ =======================
+    let currentTicketForRating = null;
+    let selectedRating = 0;
+
+    window.openRatingModal = function(ticketId) {
+        currentTicketForRating = ticketId;
+        const modal = document.getElementById('rating-modal');
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        selectedRating = 0;
+        const submitBtn = document.getElementById('rating-submit-btn');
+        if (submitBtn) submitBtn.disabled = true;
+        document.querySelectorAll('.star-rating').forEach(star => {
+            star.classList.remove('active');
+            star.textContent = '☆';
+        });
+        const msgDiv = document.querySelector('.rating-message');
+        if (msgDiv) msgDiv.textContent = '';
+    };
+
+    function closeRatingModal() {
+        document.getElementById('rating-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        window.location.reload();
+    }
+
+    document.querySelectorAll('.star-rating').forEach(star => {
+        star.addEventListener('click', () => {
+            const value = parseInt(star.dataset.value);
+            selectedRating = value;
+            document.querySelectorAll('.star-rating').forEach((s, idx) => {
+                if (idx < value) {
+                    s.classList.add('active');
+                    s.textContent = '★';
+                } else {
+                    s.classList.remove('active');
+                    s.textContent = '☆';
+                }
+            });
+            const submitBtn = document.getElementById('rating-submit-btn');
+            if (submitBtn) submitBtn.disabled = false;
+            const msgDiv = document.querySelector('.rating-message');
+            if (msgDiv) msgDiv.textContent = '';
+        });
+        
+        star.addEventListener('mouseenter', () => {
+            const value = parseInt(star.dataset.value);
+            document.querySelectorAll('.star-rating').forEach((s, idx) => {
+                if (idx < value) {
+                    s.style.color = '#FBBF24';
+                    s.textContent = '★';
+                } else {
+                    s.style.color = '#ccc';
+                    s.textContent = '☆';
+                }
+            });
+        });
+        star.addEventListener('mouseleave', () => {
+            document.querySelectorAll('.star-rating').forEach((s, idx) => {
+                const val = idx + 1;
+                if (val <= selectedRating) {
+                    s.classList.add('active');
+                    s.style.color = '';
+                    s.textContent = '★';
+                } else {
+                    s.classList.remove('active');
+                    s.style.color = '';
+                    s.textContent = '☆';
+                }
+            });
+        });
+    });
+
+    document.getElementById('rating-submit-btn')?.addEventListener('click', async () => {
+        if (selectedRating === 0) {
+            const msgDiv = document.querySelector('.rating-message');
+            if (msgDiv) msgDiv.textContent = 'Выберите оценку!';
+            return;
+        }
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const formData = new URLSearchParams();
+            formData.append('ticketId', currentTicketForRating);
+            formData.append('rating', selectedRating);
+            
+            const response = await fetch('/Ticket/RateTicket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: formData
+            });
+            if (response.ok) {
+                closeRatingModal();
+            } else {
+                const error = await response.text();
+                alert('Ошибка при оценке: ' + error);
+            }
+        } catch (err) {
+            alert('Ошибка сети: ' + err.message);
+        }
+    });
+
+    document.getElementById('rating-skip-btn')?.addEventListener('click', () => {
+        closeRatingModal();
+    });
+
+    // ======================= ОТМЕНА ЗАЯВКИ =======================
+    window.showCancelConfirmation = function(ticketId) {
+        document.getElementById('cancel-confirmation-modal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    };
+    
+    function closeCancelConfirmationModal() {
+        document.getElementById('cancel-confirmation-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.getElementById('cancel-reason-form')?.reset();
+    }
+    
+    window.confirmCancel = async function() {
+        const ticketId = document.getElementById('cancel-ticket-id').value;
+        const reason = document.getElementById('cancel-reason').value;
+        
+        try {
+            const response = await fetch('/Ticket/CancelTicket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ ticketId, reason })
+            });
+            
+            if (response.ok) {
+                showNotification('Заявка успешно отменена', 'success');
+                closeCancelConfirmationModal();
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                const error = await response.text();
+                showNotification(`Ошибка при отмене заявки: ${error}`, 'error');
+            }
+        } catch (err) {
+            showNotification(`Ошибка сети: ${err.message}`, 'error');
+        }
+    };
+    
+    // ======================= ДЕЛЕГИРОВАНИЕ (НОВАЯ ВЕРСИЯ) =======================
+    let delegationCandidates = [];
+    let selectedUserId = null;
+    let delegationSearchTimeout = null;
+
+    window.openDelegationModal = function() {
+        const modal = document.getElementById('delegation-modal');
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        
+        loadDelegationCandidates();
+        
+        selectedUserId = null;
+        const confirmBtn = document.getElementById('delegation-confirm-btn');
+        if (confirmBtn) confirmBtn.disabled = true;
+        const detailsPanel = document.getElementById('delegation-user-details');
+        if (detailsPanel) {
+            detailsPanel.innerHTML = `
+                <div class="user-details-placeholder">
+                    <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                    </svg>
+                    <p>Выберите пользователя из списка слева</p>
+                </div>
+            `;
+        }
+    };
+    
+    function closeDelegationModal() {
+        document.getElementById('delegation-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+    
+    async function loadDelegationCandidates() {
+        const container = document.getElementById('candidates-list');
+        if (!container) return;
+        container.innerHTML = '<div class="loading-spinner">Загрузка...</div>';
+        
+        try {
+          const ticketId = '@Model.Ticket.Id';
+              console.log('ticketId:', ticketId);
+            const response = await fetch(`/Ticket/GetDelegationCandidates?ticketId=${encodeURIComponent(ticketId)}`);
+            if (!response.ok) throw new Error('Ошибка загрузки');
+            delegationCandidates = await response.json();
+            renderCandidatesList(delegationCandidates);
+        } catch (error) {
+            console.error(error);
+            container.innerHTML = '<div class="loading-spinner">Не удалось загрузить список</div>';
+        }
+    }
+    
+    function renderCandidatesList(candidates) {
+        const container = document.getElementById('candidates-list');
+        if (!container) return;
+        if (!candidates.length) {
+            container.innerHTML = '<div class="loading-spinner">Нет доступных пользователей для делегирования</div>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        candidates.forEach(candidate => {
+            const item = document.createElement('div');
+            item.className = 'candidate-item';
+            item.dataset.id = candidate.id;
+            
+            const avatarHtml = candidate.avatarPath 
+                ? `<img src="${candidate.avatarPath}" alt="avatar">`
+                : `<div class="initials">${(candidate.lastName?.[0] || '') + (candidate.firstName?.[0] || '')}</div>`;
+            
+            const onlineClass = candidate.isOnline ? 'online' : 'offline';
+            
+            item.innerHTML = `
+                <div class="candidate-avatar">${avatarHtml}</div>
+                <div class="candidate-info">
+                    <div class="candidate-name">${escapeHtml(candidate.lastName)} ${escapeHtml(candidate.firstName)}</div>
+                    <div class="candidate-role">
+                        <span class="online-status ${onlineClass}"></span>
+                        ${escapeHtml(candidate.role)}
+                    </div>
+                </div>
+            `;
+            item.addEventListener('click', () => selectCandidate(candidate.id));
+            container.appendChild(item);
+        });
+    }
+    
+    function selectCandidate(userId) {
+        selectedUserId = userId;
+        document.querySelectorAll('.candidate-item').forEach(el => {
+            if (parseInt(el.dataset.id) === userId) {
+                el.classList.add('selected');
+            } else {
+                el.classList.remove('selected');
+            }
+        });
+        
+        const candidate = delegationCandidates.find(c => c.id === userId);
+        if (candidate) {
+            showUserDetails(candidate);
+            const confirmBtn = document.getElementById('delegation-confirm-btn');
+            if (confirmBtn) confirmBtn.disabled = false;
+        } else {
+            const confirmBtn = document.getElementById('delegation-confirm-btn');
+            if (confirmBtn) confirmBtn.disabled = true;
+        }
+    }
+    
+    function showUserDetails(user) {
+        const detailsPanel = document.getElementById('delegation-user-details');
+        if (!detailsPanel) return;
+        
+        const avatarHtml = user.avatarPath 
+            ? `<img src="${user.avatarPath}" alt="avatar">`
+            : `<div class="initials">${escapeHtml((user.lastName?.[0] || '') + (user.firstName?.[0] || ''))}</div>`;
+        
+        const onlineStatus = user.isOnline 
+            ? '<span class="online-status online"></span> В сети'
+            : `<span class="online-status offline"></span> Был(а) ${escapeHtml(user.lastSeenText || 'неизвестно')}`;
+        
+        detailsPanel.innerHTML = `
+            <div class="user-details-card">
+                <div class="user-details-header">
+                    <div class="user-details-avatar">
+                        ${avatarHtml}
+                    </div>
+                    <div>
+                        <div class="user-details-name">${escapeHtml(user.lastName)} ${escapeHtml(user.firstName)} ${escapeHtml(user.middleName || '')}</div>
+                        <div class="user-details-role">${escapeHtml(user.role)}</div>
+                    </div>
+                </div>
+                <div class="user-details-info">
+                    <div class="info-row">
+                        <div class="info-label">Email:</div>
+                        <div class="info-value">${escapeHtml(user.email || '—')}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Отдел:</div>
+                        <div class="info-value">${escapeHtml(user.department || '—')}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Должность:</div>
+                        <div class="info-value">${escapeHtml(user.position || '—')}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Статус:</div>
+                        <div class="info-value">${onlineStatus}</div>
+                    </div>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label for="delegation-reason">Причина делегирования:</label>
+                        <textarea id="delegation-reason" rows="3" class="form-textarea" placeholder="Укажите причину делегирования заявки..." required></textarea>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+       window.confirmDelegation = async function() {
+        if (!selectedUserId) {
+            showNotification('Выберите пользователя', 'error');
+            return;
+        }
+        const reasonTextarea = document.getElementById('delegation-reason');
+        const reason = reasonTextarea ? reasonTextarea.value : '';
+        if (!reason.trim()) {
+            showNotification('Укажите причину делегирования', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/Ticket/DelegateTicket', {
+                method: 'POST',
+                credentials: 'same-origin',   // обязательно для передачи кук
+                headers: {
+                    'Content-Type': 'application/json'
+                    // токен не нужен, пока стоит [IgnoreAntiforgeryToken]
+                },
+                body: JSON.stringify({
+                    ticketId: '@Model.Ticket.Id',   // строка, чтобы не потерять точность
+                    toUserId: selectedUserId,
+                    reason: reason
+                })
+            });
+
+            if (response.ok) {
+                showNotification('Заявка успешно делегирована', 'success');
+                closeDelegationModal();
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                const errorText = await response.text();
+                console.error('Ошибка делегирования:', errorText);
+                showNotification(`Ошибка: ${errorText}`, 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showNotification(`Ошибка сети: ${err.message}`, 'error');
+        }
+    };
+    
+    // Обработчик поиска
+    const searchInput = document.getElementById('delegation-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(delegationSearchTimeout);
+            const query = e.target.value.toLowerCase();
+            delegationSearchTimeout = setTimeout(() => {
+                const filtered = delegationCandidates.filter(c => 
+                    (c.lastName?.toLowerCase().includes(query) ||
+                     c.firstName?.toLowerCase().includes(query) ||
+                     c.role?.toLowerCase().includes(query))
+                );
+                renderCandidatesList(filtered);
+                if (selectedUserId && !filtered.find(f => f.id === selectedUserId)) {
+                    selectedUserId = null;
+                    const confirmBtn = document.getElementById('delegation-confirm-btn');
+                    if (confirmBtn) confirmBtn.disabled = true;
+                    const detailsPanel = document.getElementById('delegation-user-details');
+                    if (detailsPanel) {
+                        detailsPanel.innerHTML = `
+                            <div class="user-details-placeholder">
+                                <p>Пользователь не найден в результатах поиска</p>
+                            </div>
+                        `;
+                    }
+                }
+            }, 300);
+        });
+    }
+    
+    // Кнопка подтверждения делегирования
+    const delegationConfirmBtn = document.getElementById('delegation-confirm-btn');
+    if (delegationConfirmBtn) {
+        delegationConfirmBtn.addEventListener('click', confirmDelegation);
+    }
+    
+    // ======================= УВЕДОМЛЕНИЯ =======================
+    function showNotification(message, type) {
+        const existing = document.querySelector('.notification');
+        if (existing) existing.remove();
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 500);
+        }, 5000);
+    }
+    
+    if (!document.querySelector('#notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 4px;
+                color: white;
+                font-weight: 500;
+                z-index: 2000;
+                transition: opacity 0.5s;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+            .notification.success { background-color: #10b981; }
+            .notification.error { background-color: #ef4444; }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Вспомогательная функция escapeHtml для защиты от XSS
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+    
+    // ======================= ОСНОВНАЯ ИНИЦИАЛИЗАЦИЯ =======================
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof ChatHelper !== 'undefined') {
+            ChatHelper.init(@Model.Ticket.Id, @Model.CurrentUser.Id);
+            setTimeout(() => { ChatHelper.scrollToBottom(); }, 100);
+        }
+    
+        setTimeout(() => {
+            document.querySelectorAll('.local-time').forEach(el => {
+                if (!el.closest('.message-footer') && !el.closest('.message-edited')) {
+                    formatLocalTime(el);
+                }
+            });
+        }, 200);
+    
+        const container = document.getElementById('history-list-container');
+        if (container) {
+            container.style.maxHeight = 'none';
+            container.style.overflow = 'visible';
+        }
+    
+        const attachmentsContainer = document.getElementById('ticket-attachments-container');
+        if (attachmentsContainer && typeof window.FilePreviewHelper !== 'undefined') {
+            attachmentsContainer.innerHTML = '';
+            
+            @if (Model.Ticket.TicketAttachments.Any())
+            {
+                foreach (var attachment in Model.Ticket.TicketAttachments)
+                {
+                    var ext = System.IO.Path.GetExtension(attachment.FileName)?.TrimStart('.').ToLower();
+                    bool isImage = new[] { "jpg", "jpeg", "png", "gif", "bmp", "webp" }.Contains(ext);
+                    
+                    <text>
+                    (function() {
+                        var fileData = {
+                            id: @attachment.Id,
+                            fileName: "@(attachment.FileName.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("'", "\\'"))",
+                            filePath: "@(attachment.FilePath.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("'", "\\'"))",
+                            isImage: @isImage.ToString().ToLower()
+                        };
+                        var preview = window.FilePreviewHelper.createVirtualFilePreview(fileData, null, true);
+                        document.getElementById('ticket-attachments-container').appendChild(preview);
+                    })();
+                    </text>
+                }
+            }
+        }
+    
+        // Контекстное меню для сообщений
+        let currentCommentId = null, currentCommentContent = '';
         const ctxMenu = document.getElementById('context-menu');
         const ctxEditBtn = document.getElementById('ctx-edit-btn');
         const ctxDeleteBtn = document.getElementById('ctx-delete-btn');
-
+    
         document.querySelectorAll('.message-options-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const messageEl = this.closest('.message');
                 if (!messageEl) return;
-
                 const commentId = parseInt(messageEl.dataset.commentId);
                 if (isNaN(commentId)) return;
-
                 e.preventDefault();
-
                 const contentEl = messageEl.querySelector('.message-text');
                 currentCommentId = commentId;
                 currentCommentContent = contentEl?.textContent || '';
-
+    
                 ctxMenu.style.display = 'block';
                 ctxMenu.style.left = (e.clientX - 180) + 'px';
                 ctxMenu.style.top = e.clientY + 'px';
-
+    
                 ctxEditBtn.onclick = function () {
                     ChatHelper.editMessage(currentCommentId, currentCommentContent);
                     ctxMenu.style.display = 'none';
                 };
-
                 ctxDeleteBtn.onclick = function () {
                     ChatHelper.deleteMessageRequest(currentCommentId);
                     ctxMenu.style.display = 'none';
                 };
-
                 document.addEventListener('click', function hideMenu() {
                     ctxMenu.style.display = 'none';
                     document.removeEventListener('click', hideMenu);
                 }, { once: true });
             });
         });
-
+    
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && ctxMenu.style.display === 'block') {
                 ctxMenu.style.display = 'none';
             }
         });
-
+    
         const textarea = document.getElementById('comment-content');
         if (textarea) {
             textarea.addEventListener('input', function() {
@@ -794,7 +1591,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.style.height = (this.scrollHeight) + 'px';
             });
         }
-    }); 
+    });
     
     function GetFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
@@ -803,168 +1600,4 @@ document.addEventListener('DOMContentLoaded', function() {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
-    // Рендеринг вложений заявки через FilePreviewHelper
-function renderTicketAttachments() {
-    const container = document.getElementById('ticket-attachments-container');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    @if (Model.Ticket.TicketAttachments.Any())
-    {
-        foreach (var attachment in Model.Ticket.TicketAttachments)
-        {
-            var ext = System.IO.Path.GetExtension(attachment.FileName)?.TrimStart('.').ToLower();
-            bool isImage = new[] { "jpg", "jpeg", "png", "gif", "bmp", "webp" }.Contains(ext);
-            
-            @:const file_@attachment.Id = {
-            @:    id: @attachment.Id,
-            @:    fileName: "@attachment.FileName",
-            @:    filePath: "@attachment.FilePath",
-            @:    isImage: @isImage.ToString().ToLower()
-            @:};
-            @:
-            @:const preview_@attachment.Id = window.FilePreviewHelper.createVirtualFilePreview(
-            @:    file_@attachment.Id,
-            @:    null,  // нет функции удаления для существующих файлов
-            @:    true
-            @:);
-            @:container.appendChild(preview_@attachment.Id);
-        }
-    }
-}
-
-// Запускаем после загрузки страницы
-document.addEventListener('DOMContentLoaded', function() {
-    renderTicketAttachments();
-});
 </script>
-
-<style>
-    .history-icon {
-        width: 16px;
-        height: 16px;
-        margin-right: 6px;
-        vertical-align: middle;
-        display: inline-flex;
-    }
-    
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 500;
-    }
-    
-    .status-icon {
-        font-size: 1.2em;
-        line-height: 1;
-    }
-    
-    .priority-stars {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-    
-    .stars-container {
-        display: flex;
-        gap: 2px;
-    }
-    
-    .star {
-        font-size: 1rem;
-        line-height: 1;
-        color: #D1D5DB;
-    }
-    
-    .star.active {
-        color: #F59E0B;
-    }
-    
-    .priority-label-text {
-        font-size: 0.75rem;
-        text-align: center;
-    }
-
-    /* Стили для истории */
-    .section-header-with-toggle {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
-        user-select: none;
-        padding: 8px 0;
-    }
-
-    .section-header-with-toggle:hover {
-        opacity: 0.8;
-    }
-
-    .section-header-with-toggle .section-title {
-        margin-bottom: 0;
-    }
-
-    .toggle-icon {
-        transition: transform 0.3s ease;
-        width: 24px;
-        height: 24px;
-    }
-
-    #history-list-container {
-        transition: max-height 0.3s ease;
-        overflow: hidden;
-    }
-
-    .history-count {
-        font-size: 0.8rem;
-        font-weight: normal;
-        color: #6B7280;
-        margin-left: 8px;
-    }
-
-    .history-old-value {
-        font-size: 0.75rem;
-        color: #9CA3AF;
-        margin-left: 6px;
-        font-weight: normal;
-    }
-
-    .history-toggle-more {
-        text-align: center;
-        margin-top: 16px;
-        padding-top: 12px;
-        border-top: 1px solid #E5E7EB;
-    }
-
-    .toggle-history-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        background: #F9FAFB;
-        border: 1px solid #E5E7EB;
-        border-radius: 8px;
-        color: #4B5563;
-        cursor: pointer;
-        font-size: 0.85rem;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-
-    .toggle-history-btn:hover {
-        background: #F3F4F6;
-        border-color: #D1D5DB;
-    }
-
-    .toggle-history-btn svg {
-        transition: transform 0.2s ease;
-    }
-
-    #history-section {
-        margin-top: 20px;
-    }
-</style>

@@ -16,11 +16,13 @@ namespace labsupport.Hubs
         public ChatHub(
             ITicketService ticketService,
             IWebHostEnvironment webHostEnvironment,
-            ILogger<ChatHub> logger)
+            ILogger<ChatHub> logger,
+            IHubContext<ChatHub> hubContext)
         {
             _ticketService = ticketService;
             _webHostEnvironment = webHostEnvironment;
             _logger = logger;
+
         }
 
         // Присоединение к комнате заявки
