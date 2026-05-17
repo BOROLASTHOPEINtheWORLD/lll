@@ -39,6 +39,7 @@ namespace labsupport.Services
         Task<bool> IsTicketAssigneeAsync(long ticketId, int userId);
         Task<long?> GetTicketAssigneeIdAsync(long ticketId, int userId);
         Task<TicketComment> AddSystemCommentAsync(long ticketId, string content);
+        Task<(bool success, string errorMessage)> ChangeTicketPriorityAsync(long ticketId, short newPriority, string? reason, int userId);
     }
 
     public class TicketService : ITicketService
@@ -47,16 +48,19 @@ namespace labsupport.Services
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly ILogger<TicketService> _logger;
         private readonly IHubContext<ChatHub> _hubContext;
+        private readonly INotificationService _notificationService;
         public TicketService(
             LabsupportContext context,
             IWebHostEnvironment webHostEnvironment,
             ILogger<TicketService> logger,
-             IHubContext<ChatHub> hubContext)
+             IHubContext<ChatHub> hubContext,
+             INotificationService notificationService)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
             _logger = logger;
             _hubContext = hubContext;
+            _notificationService = notificationService;
         }
 
         public async Task<bool> IsUserManagerOrAdminAsync(int userId)
@@ -475,32 +479,40 @@ namespace labsupport.Services
             _context.TicketHistories.Add(history);
             await _context.SaveChangesAsync();
 
-            // Системное сообщение — только если НЕ сбрасываем на "Новая"
+            // Системное сообщение и уведомления — только если НЕ сбрасываем на "Новая"
+            if (statusId != 1)
+            {
+                var oldStatusName = (await _context.TicketStatuses.FindAsync(oldStatusId))?.Name ?? oldStatusId.ToString();
+                var newStatusName = newStatus?.Name ?? statusId.ToString();
+                var systemText = $"Статус заявки изменён: {oldStatusName} → {newStatusName}";
 
-                // Системное сообщение — только если НЕ сбрасываем на "Новая"
-                if (statusId != 1)
+                var systemComment = await AddSystemCommentAsync(ticketId, systemText);
+
+                await _hubContext.Clients
+                    .Group($"ticket-{ticketId}")
+                    .SendAsync("ReceiveMessage", new
+                    {
+                        systemComment.Id,
+                        systemComment.Content,
+                        IsInternal = false,
+                        CreatedAt = systemComment.CreatedAt?.ToString("o"),
+                        AuthorName = "Система",
+                        AuthorAvatar = (string?)null,
+                        UserId = (int?)null,
+                        EditedAt = (string?)null,
+                        Attachments = new List<object>()
+                    });
+
+                // Уведомляем участников (автора и исполнителя, кроме инициатора)
+                var notifyUsers = new List<int>();
+                if (ticket.CreatedById != userId) notifyUsers.Add(ticket.CreatedById);
+                if (ticket.AssignedToId != 0 && ticket.AssignedToId != userId)
+                    notifyUsers.Add(ticket.AssignedToId);
+
+                foreach (var uid in notifyUsers.Distinct())
                 {
-                    var oldStatusName = (await _context.TicketStatuses.FindAsync(oldStatusId))?.Name ?? oldStatusId.ToString();
-                    var newStatusName = newStatus?.Name ?? statusId.ToString();
-                    var systemText = $"Статус заявки изменён: {oldStatusName} → {newStatusName}";
-
-                    var systemComment = await AddSystemCommentAsync(ticketId, systemText);
-
-                    await _hubContext.Clients
-                        .Group($"ticket-{ticketId}")
-                        .SendAsync("ReceiveMessage", new
-                        {
-                            systemComment.Id,
-                            systemComment.Content,
-                            IsInternal = false,
-                            CreatedAt = systemComment.CreatedAt?.ToString("o"),
-                            AuthorName = "Система",
-                            AuthorAvatar = (string?)null,
-                            UserId = (int?)null,
-                            EditedAt = (string?)null,
-                            Attachments = new List<object>()
-                        });
-                
+                    await _notificationService.CreateAsync(uid, ticketId, systemText);
+                }
             }
 
             return (true, null);
@@ -788,6 +800,16 @@ namespace labsupport.Services
                     EditedAt = (string?)null,
                     Attachments = new List<object>()
                 });
+
+            // Уведомления: автору и новому исполнителю (toUserId) — старый исполнитель сам делегировал
+            var notifyUsers = new List<int> { toUserId };
+            if (ticket.CreatedById != currentUserId) notifyUsers.Add(ticket.CreatedById);
+
+            foreach (var uid in notifyUsers.Distinct())
+            {
+                await _notificationService.CreateAsync(uid, ticketId, systemText);
+            }
+
         }
         public async Task<(bool success, string errorMessage)> CancelTicketAsync(long ticketId, int userId, string? reason = null)
         {
@@ -799,21 +821,17 @@ namespace labsupport.Services
                     .FirstOrDefaultAsync(t => t.Id == ticketId && (t.CreatedById == userId || t.AssignedToId == userId));
 
                 if (ticket == null)
-                {
                     return (false, "Заявка не найдена или недостаточно прав");
-                }
 
                 // Проверяем, не отменена ли уже заявка
                 if (ticket.StatusId == 8) // 8 - статус "Отменена"
-                {
                     return (false, "Заявка уже отменена");
-                }
 
                 // Сохраняем старый статус для истории
                 var oldStatusName = ticket.Status?.Name ?? ticket.StatusId.ToString();
                 var oldStatusId = ticket.StatusId;
 
-                // Обновляем статус на "Отменена" (статус 8)
+                // Обновляем статус на "Отменена"
                 ticket.StatusId = 8;
                 ticket.UpdatedAt = DateTime.UtcNow;
                 ticket.ClosedAt = DateTime.UtcNow;
@@ -868,13 +886,23 @@ namespace labsupport.Services
                         CreatedAt = systemComment.CreatedAt?.ToString("o"),
                         AuthorName = "Система",
                         AuthorAvatar = (string?)null,
-                        UserId = (int?)null,               // системное сообщение
+                        UserId = (int?)null,
                         EditedAt = (string?)null,
                         Attachments = new List<object>()
                     });
 
-                _logger.LogInformation("Заявка {TicketId} отменена пользователем {UserId}", ticketId, userId);
+                // Уведомления участникам (автору и исполнителю, кроме инициатора)
+                var notifyUsers = new List<int>();
+                if (ticket.CreatedById != userId) notifyUsers.Add(ticket.CreatedById);
+                if (ticket.AssignedToId != 0 && ticket.AssignedToId != userId)
+                    notifyUsers.Add(ticket.AssignedToId);
 
+                foreach (var uid in notifyUsers.Distinct())
+                {
+                    await _notificationService.CreateAsync(uid, ticketId, systemText);
+                }
+
+                _logger.LogInformation("Заявка {TicketId} отменена пользователем {UserId}", ticketId, userId);
                 return (true, null!);
             }
             catch (Exception ex)
@@ -935,6 +963,12 @@ namespace labsupport.Services
                     Attachments = new List<object>()
                 });
 
+            // Уведомление исполнителю, если он не автор
+            if (ticket.AssignedToId != 0 && ticket.AssignedToId != userId)
+            {
+                await _notificationService.CreateAsync(ticket.AssignedToId, ticketId, systemText);
+            }
+
             return (true, null);
         }
         public async Task<List<TicketDelegation>> GetDelegationsForTicketAsync(long ticketId)
@@ -973,6 +1007,94 @@ namespace labsupport.Services
             await _context.SaveChangesAsync();
             _logger.LogWarning("System comment created: Id={Id}, UserId={UserId}", comment.Id, comment.UserId);
             return comment;
+        }
+        public async Task<(bool success, string errorMessage)> ChangeTicketPriorityAsync(long ticketId, short newPriority, string? reason, int userId)
+        {
+            if (newPriority < 1 || newPriority > 5)
+                return (false, "Приоритет должен быть от 1 до 5");
+
+            var ticket = await _context.Tickets
+                .FirstOrDefaultAsync(t => t.Id == ticketId);
+
+            if (ticket == null)
+                return (false, "Заявка не найдена");
+
+            // Проверяем права: исполнитель или админ/менеджер
+            bool isAssignee = ticket.AssignedToId == userId;
+            bool isManagerOrAdmin = await IsUserManagerOrAdminAsync(userId);
+            if (!isAssignee && !isManagerOrAdmin)
+                return (false, "У вас нет прав на изменение приоритета");
+
+            var oldPriority = ticket.Priority;
+            if (oldPriority == newPriority)
+                return (false, "Приоритет уже установлен в это значение");
+
+            // Обновляем приоритет
+            ticket.Priority = newPriority;
+            ticket.UpdatedAt = DateTime.UtcNow;
+
+            // Запись в TicketPriorityChange
+            var priorityChange = new TicketPriorityChange
+            {
+                TicketId = ticketId,
+                ChangedById = userId,
+                OldPriority = oldPriority,
+                NewPriority = newPriority,
+                Reason = reason,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.TicketPriorityChanges.Add(priorityChange);
+
+            // Запись в историю (TicketHistory)
+            var history = new TicketHistory
+            {
+                TicketId = ticketId,
+                UserId = userId,
+                FieldName = "Приоритет",
+                OldValue = oldPriority.ToString(),
+                NewValue = newPriority.ToString(),
+                ChangedAt = DateTime.UtcNow
+            };
+            _context.TicketHistories.Add(history);
+
+            await _context.SaveChangesAsync();
+
+            // Системное сообщение в чат
+            string[] priorityNames = { "Низкий", "Ниже среднего", "Средний", "Выше среднего", "Высокий" };
+            string oldName = (oldPriority >= 1 && oldPriority <= 5) ? priorityNames[oldPriority - 1] : oldPriority.ToString();
+            string newName = (newPriority >= 1 && newPriority <= 5) ? priorityNames[newPriority - 1] : newPriority.ToString();
+
+            var systemText = $"Приоритет заявки изменён: {oldName} → {newName}";
+            if (!string.IsNullOrWhiteSpace(reason))
+                systemText += $"\nПричина: {reason}";
+
+            var systemComment = await AddSystemCommentAsync(ticketId, systemText);
+
+            await _hubContext.Clients
+                .Group($"ticket-{ticketId}")
+                .SendAsync("ReceiveMessage", new
+                {
+                    systemComment.Id,
+                    systemComment.Content,
+                    IsInternal = false,
+                    CreatedAt = systemComment.CreatedAt?.ToString("o"),
+                    AuthorName = "Система",
+                    AuthorAvatar = (string?)null,
+                    UserId = (int?)null,
+                    EditedAt = (string?)null,
+                    Attachments = new List<object>()
+                });
+            var notifyUsers = new List<int>();
+            if (ticket.CreatedById != userId) notifyUsers.Add(ticket.CreatedById);
+            if (ticket.AssignedToId != 0 && ticket.AssignedToId != userId)
+                notifyUsers.Add(ticket.AssignedToId);
+
+            foreach (var uid in notifyUsers.Distinct())
+            {
+                await _notificationService.CreateAsync(uid, ticketId, systemText);
+            }
+
+            return (true, null);
         }
     }
 }

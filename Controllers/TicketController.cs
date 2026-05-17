@@ -444,8 +444,18 @@ namespace labsupport.Controllers
 
             return Ok(result);
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePriority(long ticketId, short newPriority, string? reason)
+        {
+            var userId = GetCurrentUserId();
+            var result = await _ticketService.ChangeTicketPriorityAsync(ticketId, newPriority, reason, userId);
+            if (!result.success)
+                return BadRequest(result.errorMessage);
+            return Ok(new { success = true });
+        }
 
-            public class CancelTicketViewModel
+        public class CancelTicketViewModel
         {
             public long TicketId { get; set; }
             public string Reason { get; set; } = string.Empty;

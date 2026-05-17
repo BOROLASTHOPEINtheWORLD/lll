@@ -3262,7 +3262,7 @@ textarea.form-control {
 .message-system {
     display: flex;
     justify-content: center;
-    margin: 4px 0; /* Минимальные отступы между сообщениями */
+    margin: 4px 0;
 }
 
 .system-message-content {
@@ -3270,23 +3270,25 @@ textarea.form-control {
     border-left: 3px solid #4a6cf7;
     padding: 6px 10px;
     border-radius: 6px;
-    /* Компактная структура */
+    /* Flex без gap, чтобы контролировать отступы вручную */
     display: flex;
     align-items: flex-start;
-    gap: 8px;
+    /* gap: 8px;  <-- УБРАТЬ ЭТО */
+
     max-width: 80%;
     font-size: 13px;
     line-height: 1.4;
     color: #2c3e50;
-    /* Для позиционирования времени */
     position: relative;
 }
 
 .system-icon {
     color: #4a6cf7;
     flex-shrink: 0;
-    /* Выравнивание иконки строго по первой строке текста */
+    display: block; /* Убираем лишние отступы строчного элемента */
     margin-top: 1px;
+    /* Отступ от иконки до текста задаем здесь */
+    margin-right: 6px;
     width: 16px;
     height: 16px;
 }
@@ -3296,21 +3298,20 @@ textarea.form-control {
     white-space: pre-wrap;
     flex: 1;
     min-width: 0;
+    /* Полный сброс отступов */
     margin: 0;
     padding: 0;
-    /* Убираем лишние отступы, которые создают дыры */
-    display: block;
+    display: block; /* Гарантируем отсутствие отступов inline-элемента */
+    line-height: 1.4;
 }
 
 .system-time {
     font-size: 11px;
     color: #9ca3af;
     white-space: nowrap;
-    /* Позиционируем время в правом нижнем углу плашки */
     position: absolute;
     bottom: 4px;
     right: 8px;
-    /* Чтобы время не наезжало на текст при коротких сообщениях */
     background: linear-gradient(to right, rgba(240,244,255,0) 0%, #f0f4ff 20%);
     padding-left: 10px;
 }
@@ -4157,4 +4158,114 @@ textarea.form-control {
     text-align: center;
     padding: 20px;
     color: #9ca3af;
+}
+.priority-stars-editable .priority-star {
+    font-size: 22px;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.2s;
+    margin-right: 4px;
+}
+
+    .priority-stars-editable .priority-star.active {
+        color: #FBBF24;
+    }
+
+    .priority-stars-editable .priority-star:hover {
+        color: #FBBF24;
+    }
+
+
+/*КОЛОКОЛЬЧИК*/
+
+.notification-dropdown {
+    position: fixed;
+    width: 280px;
+    max-height: 360px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    z-index: 99999;
+    flex-direction: column;
+    display: none;
+    overflow: hidden;
+}
+
+.notification-dropdown-header {
+    padding: 10px 12px;
+    font-weight: 600;
+    border-bottom: 1px solid #334155;
+    color: #e2e8f0;
+}
+
+.notification-list {
+    overflow-y: auto;
+    max-height: 300px;
+    scrollbar-width: thin;
+    scrollbar-color: #4b5563 #1e293b;
+}
+    .notification-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .notification-list::-webkit-scrollbar-track {
+        background: #1e293b;
+        border-radius: 3px;
+    }
+
+    .notification-list::-webkit-scrollbar-thumb {
+        background-color: #4b5563;
+        border-radius: 3px;
+        border: 1px solid #1e293b;
+    }
+
+        .notification-list::-webkit-scrollbar-thumb:hover {
+            background-color: #6b7280;
+        }
+.notification-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #cbd5e1;
+    border-bottom: 1px solid #2d3a4a;
+    display: block;
+    text-decoration: none;
+}
+
+    .notification-item:hover {
+        background-color: #2d3a4a;
+    }
+
+.notification-empty {
+    padding: 16px;
+    text-align: center;
+    color: #64748b;
+}
+.notification-bell {
+    position: relative;
+    cursor: pointer;
+}
+.notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background-color: #ef4444;
+    color: white;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 0 4px;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.notification-item.notification-read {
+    opacity: 0.6;
+    background-color: #1a2332; /* чуть темнее */
+    border-left: 2px solid transparent; /* убрать цветную полосу, если была */
 }

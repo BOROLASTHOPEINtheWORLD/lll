@@ -39,7 +39,7 @@ public partial class LabsupportContext : DbContext
 
     public virtual DbSet<TicketStatus> TicketStatuses { get; set; }
     public virtual DbSet<TicketPriorityChange> TicketPriorityChanges { get; set; }
-
+    public virtual DbSet<Notification> Notifications { get; set; }
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -437,6 +437,34 @@ public partial class LabsupportContext : DbContext
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("users_role_id_fkey");
+        });
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("notifications_pkey");
+            entity.ToTable("notifications");
+
+            entity.HasIndex(e => e.UserId, "idx_notifications_user");
+            entity.HasIndex(e => e.IsRead, "idx_notifications_unread"); // для быстрого подсчёта непрочитанных
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.TicketId).HasColumnName("ticket_id");
+            entity.Property(e => e.Message).HasColumnName("message");
+            entity.Property(e => e.IsRead).HasColumnName("is_read").HasDefaultValue(false);
+            entity.Property(e => e.CreatedAt)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                  .HasColumnType("timestamp without time zone")
+                  .HasColumnName("created_at");
+
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.Notifications)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("notifications_user_id_fkey");
+
+            entity.HasOne(d => d.Ticket)
+                .WithMany(p => p.Notifications)
+                .HasForeignKey(d => d.TicketId)
+                .HasConstraintName("notifications_ticket_id_fkey");
         });
 
         modelBuilder.Entity<TicketPriorityChange>(entity =>

@@ -49,6 +49,7 @@ namespace labsupport
             builder.Services.AddScoped<DepartmentService>();
             builder.Services.AddScoped<PositionService>();
             builder.Services.AddScoped<ICategoriesService, CategoriesService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
 
             builder.Services.AddSignalR()
               .AddJsonProtocol(options =>

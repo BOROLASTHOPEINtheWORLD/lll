@@ -511,15 +511,9 @@
             messageDiv.dataset.commentId = message.id;
 
             const timeFormatted = this.formatTime(message.createdAt);
-            messageDiv.innerHTML = `
-        <div class="system-message-content">
-            <svg class="system-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-10h2v8h-2V7z"/>
-            </svg>
-            <span class="system-message-text">${this.escapeHtml(message.content).replace(/\n/g, '<br>')}</span>
-            <span class="message-time system-time" data-time="${message.createdAt}">${timeFormatted}</span>
-        </div>
-    `;
+            // Шаблон в одну строку, чтобы не было пробелов от переносов
+            messageDiv.innerHTML = `<div class="system-message-content"><svg class="system-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-10h2v8h-2V7z"/></svg><span class="system-message-text">${this.escapeHtml(message.content).replace(/\n/g, '<br>')}</span><span class="message-time system-time" data-time="${message.createdAt}">${timeFormatted}</span></div>`;
+
             container.appendChild(messageDiv);
             this.scrollToBottom();
             return;

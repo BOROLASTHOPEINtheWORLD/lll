@@ -202,6 +202,16 @@ namespace labsupport.Hubs
             }
         }
 
+        public async Task JoinUserNotificationGroup()
+        {
+            var userIdClaim = Context.User?.FindFirst("UserId")
+                              ?? Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (int.TryParse(userIdClaim?.Value, out int userId) && userId != 0)
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, $"user-{userId}");
+            }
+        }   
+
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             _logger.LogInformation("User {ConnectionId} disconnected", Context.ConnectionId);
