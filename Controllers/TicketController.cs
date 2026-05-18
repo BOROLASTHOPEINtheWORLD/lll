@@ -309,7 +309,7 @@ namespace labsupport.Controllers
             {
                 if (DateTime.TryParse($"{dueDateStr} {dueTimeStr}", out var dueDate))
                 {
-                    model.DueDate = dueDate;
+                    model.DueDate = dueDate.ToUniversalTime(); // сохраняем UTC
                 }
             }
             var userId = GetCurrentUserId();
@@ -466,6 +466,6 @@ namespace labsupport.Controllers
             public long TicketId { get; set; }
             public int ToUserId { get; set; }
             public string Reason { get; set; }
-        }
+        }   
     }
 }

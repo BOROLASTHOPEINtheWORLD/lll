@@ -39,7 +39,7 @@ namespace labsupport.Services
         Task<bool> IsTicketAssigneeAsync(long ticketId, int userId);
         Task<long?> GetTicketAssigneeIdAsync(long ticketId, int userId);
         Task<TicketComment> AddSystemCommentAsync(long ticketId, string content);
-        Task<(bool success, string errorMessage)> ChangeTicketPriorityAsync(long ticketId, short newPriority, string? reason, int userId);
+        Task<(bool success, string errorMessage)> ChangeTicketPriorityAsync(long ticketId, short newPriority, string reason, int userId);
     }
 
     public class TicketService : ITicketService
@@ -455,12 +455,12 @@ namespace labsupport.Services
             ticket.UpdatedAt = DateTime.UtcNow;
 
             if (statusId == 6) // Завершена
-                ticket.ResolvedAt = DateTime.UtcNow;
+                ticket.ClosedAt = DateTime.UtcNow;
             else if (statusId == 8) // Отменена
                 ticket.ClosedAt = DateTime.UtcNow;
             else if (statusId == 1) // Новая – сброс
             {
-                ticket.ResolvedAt = null;
+                ticket.ClosedAt = null;
                 ticket.ClosedAt = null;
             }
 
@@ -1008,11 +1008,8 @@ namespace labsupport.Services
             _logger.LogWarning("System comment created: Id={Id}, UserId={UserId}", comment.Id, comment.UserId);
             return comment;
         }
-        public async Task<(bool success, string errorMessage)> ChangeTicketPriorityAsync(long ticketId, short newPriority, string? reason, int userId)
+        public async Task<(bool success, string errorMessage)> ChangeTicketPriorityAsync(long ticketId, short newPriority, string reason, int userId)
         {
-            if (newPriority < 1 || newPriority > 5)
-                return (false, "Приоритет должен быть от 1 до 5");
-
             var ticket = await _context.Tickets
                 .FirstOrDefaultAsync(t => t.Id == ticketId);
 
@@ -1028,6 +1025,9 @@ namespace labsupport.Services
             var oldPriority = ticket.Priority;
             if (oldPriority == newPriority)
                 return (false, "Приоритет уже установлен в это значение");
+
+            if (string.IsNullOrWhiteSpace(reason))
+                return (false, "Причина изменения приоритета обязательна");
 
             // Обновляем приоритет
             ticket.Priority = newPriority;
@@ -1096,5 +1096,6 @@ namespace labsupport.Services
 
             return (true, null);
         }
+
     }
 }

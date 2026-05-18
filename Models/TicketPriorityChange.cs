@@ -7,7 +7,7 @@
         public int ChangedById { get; set; }
         public short OldPriority { get; set; }
         public short NewPriority { get; set; }
-        public string? Reason { get; set; }
+        public string Reason { get; set; } = string.Empty;
         public DateTime? CreatedAt { get; set; }
 
         // Навигационные свойства

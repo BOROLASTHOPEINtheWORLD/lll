@@ -27,8 +27,6 @@ public partial class Ticket
 
     public DateTime? UpdatedAt { get; set; }
 
-    public DateTime? ResolvedAt { get; set; }
-
     public DateTime? ClosedAt { get; set; }
 
     public string? Resolution { get; set; }

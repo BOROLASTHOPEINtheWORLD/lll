@@ -129,7 +129,9 @@
                                     <path d="M8 2v4"></path>
                                     <path d="M3 10h18"></path>
                                 </svg>
-                                @Model.Ticket.DueDate?.ToString("dd.MM.yyyy HH:mm")
+                               <span class="local-time" data-time="@Model.Ticket.DueDate?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")">
+                                    @Model.Ticket.DueDate?.ToString("dd.MM.yyyy HH:mm")
+                                </span>
                             </div>
                         }
                     </div>
@@ -393,19 +395,19 @@
     <label class="action-label">Приоритет</label>
     <div class="priority-actions">
         <!-- Текущий приоритет (статический) -->
-        <div class="priority-stars" style="display: inline-flex; align-items: center;">
+        <div class="priority-stars" style="display: flex; flex-direction: row; align-items: center;"">
             @for (int i = 1; i <= 5; i++)
             {
                 <span class="star @(i <= Model.Ticket.Priority ? "active" : "")" style="font-size: 22px;">★</span>
             }
-            <span class="priority-label-text" style="margin-left: 8px;">
+            <span class="priority-label-text" data-priority="@Model.Ticket.Priority" style="margin-left: 8px;">
                 @(Model.Ticket.Priority switch {
                     1 => "Низкий",
                     2 => "Ниже среднего",
                     3 => "Средний",
                     4 => "Выше среднего",
                     5 => "Высокий",
-                    _ => "Не задан"
+                    _ => "Не задан" 
                 })
             </span>
         </div>
@@ -439,9 +441,6 @@
                 История изменений
                 <span class="history-count">(@historyList.Count)</span>
             </h2>
-            <svg id="history-toggle-icon" class="toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" width="24px" fill="#666">
-                <path d="M440-800v487L216-537l-56 57 320 320 320-320-56-57-224 224v-487h-80Z"/>
-            </svg>
         </div>
         
         <div id="history-list-container">
@@ -537,7 +536,7 @@
                                                     break;
                                                 case "Приоритет":
                                                     iconHidden = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='10'/><path d='M12 6v6l4 2'/></svg>";
-                                                    changeTextHidden = $"изменил(а) приоритет на <strong>{item.NewValue}</strong>";
+                                                    changeTextHidden = $"изменил(а) приоритет c <strong>{item.OldValue}</strong> на <strong>{item.NewValue}</strong>";
                                                     break;
                                                 case "Исполнитель":
                                                     iconHidden = "<svg class='history-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='8.5' cy='7' r='4'/><polyline points='17 11 19 13 23 9'/></svg>";
@@ -787,13 +786,13 @@
             <button class="modal-close" onclick="closeRatingModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div class="rating-stars-large">
-                <span class="star-rating" data-value="1">☆</span>
-                <span class="star-rating" data-value="2">☆</span>
-                <span class="star-rating" data-value="3">☆</span>
-                <span class="star-rating" data-value="4">☆</span>
-                <span class="star-rating" data-value="5">☆</span>
-            </div>
+           <div class="rating-stars-large" id="priority-stars-container">
+            <span class="priority-star" data-value="1">☆</span>
+            <span class="priority-star" data-value="2">☆</span>
+            <span class="priority-star" data-value="3">☆</span>
+            <span class="priority-star" data-value="4">☆</span>
+            <span class="priority-star" data-value="5">☆</span>
+        </div>
             <div class="rating-message"></div>
         </div>
         <div class="modal-footer">
@@ -1297,27 +1296,34 @@ function updatePriorityStars(value) {
 }
 
 // Обработчики кликов на звёздах приоритета
-document.querySelector('#priority-stars-container')?.addEventListener('click', function(e) {
+// Делегируем событие с контейнера модалки (он всегда в DOM)
+document.getElementById('priority-change-modal').addEventListener('click', function(e) {
     const star = e.target.closest('.priority-star');
     if (!star) return;
+    e.stopPropagation(); // чтобы не закрыть окно
     const value = parseInt(star.dataset.value);
     selectedPriorityModal = value;
     updatePriorityStars(value);
 });
 
 // Кнопка подтверждения
+// Кнопка подтверждения
 document.getElementById('priority-change-confirm-btn')?.addEventListener('click', async function() {
     if (selectedPriorityModal === 0) {
         showNotification('Выберите приоритет', 'error');
         return;
     }
-    const reason = document.getElementById('priority-change-reason').value;
+    const reason = document.getElementById('priority-change-reason').value.trim();
+    if (!reason) {
+        showNotification('Укажите причину изменения приоритета', 'error');
+        return;
+    }
     try {
         const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
         const formData = new URLSearchParams();
         formData.append('ticketId', currentPriorityTicketId);
         formData.append('newPriority', selectedPriorityModal);
-        if (reason) formData.append('reason', reason);
+        formData.append('reason', reason);  // всегда передаём
         
         const response = await fetch('/Ticket/ChangePriority', {
             method: 'POST',

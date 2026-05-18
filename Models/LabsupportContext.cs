@@ -188,9 +188,6 @@ public partial class LabsupportContext : DbContext
             entity.Property(e => e.Priority).HasColumnName("priority");
             entity.Property(e => e.Rating).HasColumnName("rating");
             entity.Property(e => e.Resolution).HasColumnName("resolution");
-            entity.Property(e => e.ResolvedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("resolved_at");
             entity.Property(e => e.StatusId).HasColumnName("status_id");
             entity.Property(e => e.TicketNumber)
                 .HasMaxLength(20)
